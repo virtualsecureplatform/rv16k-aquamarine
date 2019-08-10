@@ -86,8 +86,7 @@ object FLAGS{
     s1_sign := s1(15)
     s2_sign := s2(15)
     res_sign := r(15)
-    when(((s1_sign^s2_sign) === 0.U) //& (s2_sign^res_sign === 1.U)){
-    ){
+    when(((s1_sign^s2_sign) === 0.U) && ((s2_sign^res_sign) === 1.U)){
       res := 1.U(1.W)
     }.otherwise{
       res := 0.U(1.W)
@@ -95,24 +94,27 @@ object FLAGS{
     res
   }
 }
+
 class ALU extends Module{
   val io = IO(new ExUnitIO)
   val flagCarry = Wire(UInt(1.W))
   val resCarry = Wire(UInt(17.W))
   val flagOverflow = Wire(UInt(1.W))
 
-  flagCarry := DontCare
   resCarry := DontCare
+  flagCarry := 0.U(1.W)
   flagOverflow := 0.U(1.W)
   when(io.in.opcode === ALUOpcode.MOV){
     io.out.res := io.in.inB
   }.elsewhen(io.in.opcode === ALUOpcode.ADD){
     resCarry := io.in.inA+&io.in.inB
     io.out.res := resCarry(15,0)
+    flagCarry := resCarry(16)
     flagOverflow := FLAGS.check_overflow(io.in.inA, io.in.inB, io.out.res)
   }.elsewhen(io.in.opcode === ALUOpcode.SUB){
     resCarry := io.in.inA-&io.in.inB
     io.out.res := resCarry(15,0)
+    flagCarry := resCarry(16)
     flagOverflow := FLAGS.check_overflow(io.in.inA, io.in.inB, io.out.res)
   }.elsewhen(io.in.opcode === ALUOpcode.AND){
     io.out.res := io.in.inA&io.in.inB
@@ -123,7 +125,6 @@ class ALU extends Module{
   }.otherwise{
     io.out.res := DontCare
   }
-  flagCarry := resCarry(16)
   io.out.flag := Cat(FLAGS.check_sign(io.out.res), FLAGS.check_zero(io.out.res), flagCarry, flagOverflow)
 }
 

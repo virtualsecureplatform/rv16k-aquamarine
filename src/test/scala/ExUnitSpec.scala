@@ -16,6 +16,8 @@ limitations under the License.
 
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import chisel3._
+import chisel3.util.Cat
+
 import scala.util.Random
 
 
@@ -24,6 +26,24 @@ class ExUnitSpec extends ChiselFlatSpec {
     assert(Driver(() => new ExUnit) {
       c =>
         new PeekPokeTester(c) {
+          def check_sign(t:Int):Boolean = {
+            val sign_bit = (t>>>15)&0x1
+            sign_bit == 1
+          }
+          def check_zero(t:Int):Boolean = (t == 0)
+          def check_overflow(s1:Int, s2:Int, r:Int):Boolean = {
+            val s1_sign = (s1>>15)&0x1
+            val s2_sign = (s2>>15)&0x1
+            val res_sign = (r>>15)&0x1
+            if(((s1_sign^s2_sign) == 0) & ((s2_sign^res_sign) == 1)) {
+              true
+            }else {
+              false
+            }
+          }
+
+          def check_carry(t:Int):Boolean = (((t>>16)&0x1) == 1)
+
           poke(c.io.shifterSig, false.B)
           for (i <- 0 until 100) {
             //MOV
@@ -32,7 +52,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 0.U(3.W))
-            expect(c.io.out.res, b.asUInt(16.W))
+            val res = b
+            expect(c.io.out.res, res.asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //ADD
@@ -41,7 +64,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 2.U(3.W))
-            expect(c.io.out.res, ((a+b)&0xFFFF).asUInt(16.W))
+            val res = a+b
+            expect(c.io.out.res, (res&0xFFFF).asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)+(check_carry(res)<<1)+(check_overflow(a,b,res))
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //SUB
@@ -50,7 +76,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 3.U(3.W))
-            expect(c.io.out.res, ((a-b)&0xFFFF).asUInt(16.W))
+            val res = a-b
+            expect(c.io.out.res, (res&0xFFFF).asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)+(check_carry(res)<<1)+(check_overflow(a,b,res))
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //AND
@@ -59,7 +88,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 4.U(3.W))
-            expect(c.io.out.res, ((a&b)&0xFFFF).asUInt(16.W))
+            val res = a&b
+            expect(c.io.out.res, (res&0xFFFF).asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //OR
@@ -68,7 +100,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 5.U(3.W))
-            expect(c.io.out.res, ((a|b)&0xFFFF).asUInt(16.W))
+            val res = a|b
+            expect(c.io.out.res, (res&0xFFFF).asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //XOR
@@ -77,7 +112,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 6.U(3.W))
-            expect(c.io.out.res, ((a^b)&0xFFFF).asUInt(16.W))
+            val res = a^b
+            expect(c.io.out.res, (res&0xFFFF).asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           poke(c.io.shifterSig, true.B)
           for (i <- 0 until 100) {
@@ -87,7 +125,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 1.U(3.W))
-            expect(c.io.out.res, ((a << b)&0xFFFF).asUInt(16.W))
+            val res = (a<<b)&0xFFFF
+            expect(c.io.out.res, res.asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //LSR
@@ -96,7 +137,10 @@ class ExUnitSpec extends ChiselFlatSpec {
             poke(c.io.in.inA, a.asUInt(16.W))
             poke(c.io.in.inB, b.asUInt(16.W))
             poke(c.io.in.opcode, 2.U(3.W))
-            expect(c.io.out.res, ((a >> b)&0xFFFF).asUInt(16.W))
+            val res = (a >> b)&0xFFFF
+            expect(c.io.out.res, res.asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
           for (i <- 0 until 100) {
             //ASR
@@ -114,7 +158,10 @@ class ExUnitSpec extends ChiselFlatSpec {
               val res = v >>> shamt
               (res|mask)&0xFFFF
             }
-            expect(c.io.out.res, shift_arithmetic(a, b).asUInt(16.W))
+            val res = shift_arithmetic(a, b)
+            expect(c.io.out.res, res.asUInt(16.W))
+            val FLAGS = (check_sign(res)<<3)+(check_zero(res)<<2)
+            expect(c.io.out.flag, FLAGS.asUInt(4.W))
           }
         }
     })
