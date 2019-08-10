@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import chisel3._
-import chisel3.util.BitPat
+import chisel3.util.{BitPat, Cat}
 object ALUOpcode {
   def MOV = BitPat("b000")
   def ADD = BitPat("b010")
@@ -38,7 +38,7 @@ class ExUnitInput extends Bundle {
 
 class ExUnitOutput extends Bundle {
   val res = Output(UInt(16.W))
-  val flag = Output(UInt(16.W))
+  val flag = Output(UInt(4.W))
 }
 
 class ExUnitIO extends Bundle {
@@ -67,14 +67,53 @@ class ExUnit extends Module {
   }
 }
 
+object FLAGS{
+  def check_sign(t:UInt):UInt = t(15)
+  def check_zero(t:UInt):UInt = {
+    val res = Wire(UInt(1.W))
+    when(t === 0.U(16.W)) {
+      res := 1.U
+    }.otherwise{
+      res := 0.U
+    }
+    res
+  }
+  def check_overflow(s1:UInt, s2:UInt, r:UInt) = {
+    val s1_sign = Wire(UInt(1.W))
+    val s2_sign = Wire(UInt(1.W))
+    val res_sign = Wire(UInt(1.W))
+    val res = Wire(UInt(1.W))
+    s1_sign := s1(15)
+    s2_sign := s2(15)
+    res_sign := r(15)
+    when(((s1_sign^s2_sign) === 0.U) //& (s2_sign^res_sign === 1.U)){
+    ){
+      res := 1.U(1.W)
+    }.otherwise{
+      res := 0.U(1.W)
+    }
+    res
+  }
+}
 class ALU extends Module{
   val io = IO(new ExUnitIO)
+  val flagCarry = Wire(UInt(1.W))
+  val resCarry = Wire(UInt(17.W))
+  val flagOverflow = Wire(UInt(1.W))
+
+  flagCarry := DontCare
+  resCarry := DontCare
+  flagOverflow := 0.U(1.W)
   when(io.in.opcode === ALUOpcode.MOV){
     io.out.res := io.in.inB
   }.elsewhen(io.in.opcode === ALUOpcode.ADD){
-    io.out.res := io.in.inA+io.in.inB
+    resCarry := io.in.inA+&io.in.inB
+    io.out.res := resCarry(15,0)
+    flagOverflow := FLAGS.check_overflow(io.in.inA, io.in.inB, io.out.res)
   }.elsewhen(io.in.opcode === ALUOpcode.SUB){
-    io.out.res := io.in.inA-io.in.inB
+    resCarry := io.in.inA-&io.in.inB
+    io.out.res := resCarry(15,0)
+    flagOverflow := FLAGS.check_overflow(io.in.inA, io.in.inB, io.out.res)
   }.elsewhen(io.in.opcode === ALUOpcode.AND){
     io.out.res := io.in.inA&io.in.inB
   }.elsewhen(io.in.opcode === ALUOpcode.OR){
@@ -84,7 +123,8 @@ class ALU extends Module{
   }.otherwise{
     io.out.res := DontCare
   }
-  io.out.flag := DontCare
+  flagCarry := resCarry(16)
+  io.out.flag := Cat(FLAGS.check_sign(io.out.res), FLAGS.check_zero(io.out.res), flagCarry, flagOverflow)
 }
 
 class Shifter extends Module {
@@ -98,5 +138,5 @@ class Shifter extends Module {
   }.otherwise{
     io.out.res := DontCare
   }
-  io.out.flag := DontCare
+  io.out.flag := Cat(FLAGS.check_sign(io.out.res), FLAGS.check_zero(io.out.res), 0.U(2.W))
 }
