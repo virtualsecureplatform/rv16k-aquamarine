@@ -13,11 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import chisel3._
 
-object Main extends App {
+import chisel3._
+import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
+
+class TopUnitSpec extends ChiselFlatSpec {
   implicit val conf = RV16KConfig()
-  //chisel3.Driver.execute(args, () => new TopUnit)
   val rom = new ExternalRom
-  print(rom.readInst(4))
+  assert(Driver(() => new TopUnit) {
+    c =>
+      new PeekPokeTester(c) {
+        for(i <- 0 until 350){
+          val addr = peek(c.io.romAddr).toInt
+          poke(c.io.romInst, rom.readInst(addr))
+          step(1)
+        }
+      }
+  })
 }
+

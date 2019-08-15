@@ -13,11 +13,27 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import chisel3._
 
-object Main extends App {
-  implicit val conf = RV16KConfig()
-  //chisel3.Driver.execute(args, () => new TopUnit)
-  val rom = new ExternalRom
-  print(rom.readInst(4))
+import chisel3._
+import chisel3.util._
+
+class StateMachinePort extends Bundle {
+  val clockIF = Output(Bool())
+  val clockID = Output(Bool())
+  val clockEX = Output(Bool())
+  val clockMEM = Output(Bool())
+  val clockWB = Output(Bool())
+}
+
+class StateMachine extends Module {
+  val io = IO(new StateMachinePort)
+
+  val state = RegInit(1.U(5.W))
+  state := Cat(state, state(4))
+
+  io.clockIF := state(0)
+  io.clockID := state(1)
+  io.clockEX := state(2)
+  io.clockMEM := state(3)
+  io.clockWB := state(4)
 }

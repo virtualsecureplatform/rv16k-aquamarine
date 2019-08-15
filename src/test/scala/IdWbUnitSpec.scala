@@ -13,11 +13,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import chisel3._
 
-object Main extends App {
+import chisel3._
+import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
+
+class IdWbUnitSpec extends ChiselFlatSpec {
   implicit val conf = RV16KConfig()
-  //chisel3.Driver.execute(args, () => new TopUnit)
-  val rom = new ExternalRom
-  print(rom.readInst(4))
+  assert(Driver(() => new IdWbUnit) {
+    c =>
+      new PeekPokeTester(c) {
+        poke(c.io.inst, 0x7801.U)
+        step(1)
+        expect(c.io.memWrite, false.B)
+        expect(c.io.writeEnable, false.B)
+        poke(c.io.inst, 0x1.U)
+        step(1)
+        expect(c.io.rd, 1.U)
+        expect(c.io.rsData, 0x1.U)
+        expect(c.io.writeEnable, true.B)
+      }
+  })
 }
+
