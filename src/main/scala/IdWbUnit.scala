@@ -43,8 +43,6 @@ class IdUnitPort extends Bundle {
   val rd = Output(UInt(4.W))
   val rs = Output(UInt(4.W))
   val writeEnable = Output(Bool())
-
-  val x1 = Output(UInt(16.W))
 }
 
 class LongImm extends Bundle {
@@ -189,7 +187,7 @@ class IdRegister extends Bundle {
   val FLAGS = UInt(4.W)
 }
 
-class IdWbUnit extends Module {
+class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
 
   val io = IO(new IdUnitPort)
   val mainRegister = Module(new MainRegister)
@@ -227,6 +225,7 @@ class IdWbUnit extends Module {
   io.jumpAddress := DontCare
   decoder.io.inst := 0.U(16.W)
   decoder.io.FLAGS := pReg.FLAGS
+
   when(immLongState === 0.U){
     decoder.io.inst := pReg.inst
     when(decoder.io.immSel) {
@@ -289,10 +288,9 @@ class IdWbUnit extends Module {
   io.writeEnable := decoder.io.writeEnable
   io.memByteEnable := decoder.io.memByteEnable
   io.memSignExt := decoder.io.memSignExt
-  io.x1 := mainRegister.io.x1
 
   val debug = RegInit(false.B)
-  debug := io.Enable
+  debug := io.Enable&&conf.debugId.B
   when(debug){
     printf("[ID] Instruction:0x%x\n", io.inst)
     printf("[ID] ImmLongState:0x%x\n", immLongState)

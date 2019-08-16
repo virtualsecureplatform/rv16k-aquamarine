@@ -58,7 +58,7 @@ class ExReg extends Bundle {
   val memSignExt = Bool()
 }
 
-class ExUnit extends Module {
+class ExUnit(implicit val conf:RV16KConfig) extends Module {
   val io = IO(new ExIO)
   val alu = Module(new ALU)
   val shifter = Module(new Shifter)
@@ -91,7 +91,7 @@ class ExUnit extends Module {
   io.memSignExtOut := pReg.memSignExt
 
   val debug = RegInit(false.B)
-  debug := io.Enable
+  debug := io.Enable&&conf.debugEx.B
   when(debug) {
     printf("[EX] opcode:0x%x\n", pReg.opcode)
     printf("[EX] inA:0x%x\n", pReg.inA)

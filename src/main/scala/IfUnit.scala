@@ -27,7 +27,6 @@ class IfUnitPort extends Bundle {
 
 class IfUnit(implicit val conf: RV16KConfig) extends Module {
   val io = IO(new IfUnitPort)
-
   val pc = Module(new PC)
 
   pc.io.jumpAddress := io.jumpAddress
@@ -37,7 +36,7 @@ class IfUnit(implicit val conf: RV16KConfig) extends Module {
   io.romAddress := pc.io.pcOut
 
   val debug = RegInit(false.B)
-  debug := io.Enable
+  debug := io.Enable&&conf.debugIf.B
   when(debug){
     printf("\n[IF]PC Address:0x%x\n", io.romAddress)
   }

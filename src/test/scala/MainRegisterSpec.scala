@@ -20,6 +20,7 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 import scala.util.Random
 
 class MainRegisterSpec extends ChiselFlatSpec{
+  implicit val conf = RV16KConfig()
     assert(Driver(() => new MainRegister) {
       c =>
         new PeekPokeTester(c) {

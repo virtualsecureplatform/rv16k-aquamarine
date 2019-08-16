@@ -24,20 +24,17 @@ class MainRegisterPort extends Bundle {
 
   val rsData = Output(UInt(16.W))
   val rdData = Output(UInt(16.W))
-
-  val x1 = Output(UInt(16.W))
 }
 
-class MainRegister extends Module{
+class MainRegister(implicit val conf:RV16KConfig) extends Module{
   val io = IO(new MainRegisterPort)
 
   val MainReg = Mem(16, UInt(16.W))
 
   io.rsData := MainReg(io.rs)
   io.rdData := MainReg(io.rd)
-  io.x1 := MainReg(1)
 
-  when(io.writeEnable === true.B) {
+  when(io.writeEnable&&conf.debugWb.B) {
     MainReg(io.rd) := io.writeData
     printf("[WB] Reg x%d <= 0x%x\n", io.rd, io.writeData)
   }.otherwise {}

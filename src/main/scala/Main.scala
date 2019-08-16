@@ -17,7 +17,5 @@ import chisel3._
 
 object Main extends App {
   implicit val conf = RV16KConfig()
-  //chisel3.Driver.execute(args, () => new TopUnit)
-  val rom = new ExternalRom
-  print(rom.readInst(4))
+  chisel3.Driver.execute(args, () => new TopUnit)
 }

@@ -20,7 +20,6 @@ import chisel3.core.withReset
 class TopUnitPort extends Bundle {
   val romInst = Input(UInt(16.W))
 
-  val x1 = Output(UInt(16.W))
   val romAddr = Output(UInt(9.W))
 }
 
@@ -61,6 +60,4 @@ class TopUnit(implicit val conf: RV16KConfig) extends Module {
   memUnit.io.signExt := exUnit.io.memSignExtOut
 
   idwbUnit.io.writeData := memUnit.io.out
-
-  io.x1 := idwbUnit.io.x1
 }

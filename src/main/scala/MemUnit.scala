@@ -31,7 +31,7 @@ class MemUnitPort extends Bundle {
   val out = Output(UInt(16.W))
 }
 
-class MemUnit extends Module {
+class MemUnit(implicit val conf:RV16KConfig) extends Module {
   val io = IO(new MemUnitPort)
 
   def sign_ext_8bit(v:UInt) : UInt = {
@@ -62,7 +62,7 @@ class MemUnit extends Module {
   }
 
   val debug = RegInit(false.B)
-  debug := io.Enable
+  debug := io.Enable&&conf.debugMem.B
   when(debug){
     when(io.memRead) {
       printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", io.address, io.out)
