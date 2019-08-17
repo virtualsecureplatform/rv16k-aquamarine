@@ -18,7 +18,7 @@ import chisel3._
 import chisel3.util.Cat
 import firrtl.transforms.DeadCodeElimination
 
-class IdUnitPort extends Bundle {
+class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val inst = Input(UInt(16.W))
   val writeData = Input(UInt(16.W))
   val wbEnable = Input(Bool())
@@ -40,9 +40,10 @@ class IdUnitPort extends Bundle {
   val jumpAddress = Output(UInt(8.W))
   val jump = Output(Bool())
 
-  val rd = Output(UInt(4.W))
-  val rs = Output(UInt(4.W))
-  val writeEnable = Output(Bool())
+  val debugRs = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
+  val debugRd = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
+  val debugRegWrite = if(conf.debugId) Output(Bool()) else Output(UInt(0.W))
+  val debugImmLongState = if(conf.debugId) Output(Bool()) else Output(UInt(0.W))
 }
 
 class LongImm extends Bundle {
@@ -122,11 +123,11 @@ class Decoder extends Module {
       io.rd := 0.U(4.W)
     }.elsewhen(io.inst(11, 10) === 1.U){
       when(io.inst(9, 7) === 0.U){
-        io.jump := (io.FLAGS(3) != io.FLAGS(0))
         //JL
+        io.jump := (io.FLAGS(3) != io.FLAGS(0))
       }.elsewhen(io.inst(9, 7) === 1.U){
-        io.jump := (io.FLAGS(3) != io.FLAGS(0)) || (io.FLAGS(2) === 1.U)
         //JLE
+        io.jump := (io.FLAGS(3) != io.FLAGS(0)) || (io.FLAGS(2) === 1.U)
       }.elsewhen(io.inst(9, 7) === 2.U){
         //JE
         io.jump := (io.FLAGS(2) === 1.U)
@@ -162,7 +163,7 @@ class Decoder extends Module {
       io.rd := 1.U(4.W)
     }.otherwise{
       io.immSel := false.B
-      when(io.inst(12,12) === 1.U){
+      when(io.inst(12,11) === 3.U){
         io.memByteEnable := true.B
       }
       when(io.inst(10,10) === 1.U) {
@@ -225,7 +226,6 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.jumpAddress := DontCare
   decoder.io.inst := 0.U(16.W)
   decoder.io.FLAGS := pReg.FLAGS
-
   when(immLongState === 0.U){
     decoder.io.inst := pReg.inst
     when(decoder.io.immSel) {
@@ -283,9 +283,6 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
 
   io.jump := decoder.io.jump
 
-  io.rs := decoder.io.rs
-  io.rd := decoder.io.rd
-  io.writeEnable := decoder.io.writeEnable
   io.memByteEnable := decoder.io.memByteEnable
   io.memSignExt := decoder.io.memSignExt
 
@@ -300,4 +297,8 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
       printf("[ID] JumpAddress:0x%x\n", io.jumpAddress)
     }
   }
+  io.debugRs := decoder.io.rs
+  io.debugRd := decoder.io.rd
+  io.debugRegWrite := decoder.io.writeEnable
+  io.debugImmLongState := immLongState
 }
