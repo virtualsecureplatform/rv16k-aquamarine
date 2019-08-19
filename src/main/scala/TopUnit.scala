@@ -15,49 +15,26 @@ limitations under the License.
 */
 
 import chisel3._
-import chisel3.core.withReset
 
 class TopUnitPort extends Bundle {
   val romInst = Input(UInt(16.W))
-
   val romAddr = Output(UInt(9.W))
 }
-
-class TopUnit(implicit val conf: RV16KConfig) extends Module {
+class TopUnit(implicit val conf:RV16KConfig) extends Module{
   val io = IO(new TopUnitPort)
+  val core = Module(new CoreUnit)
+  val memA = Module(new ExternalRam)
+  val memB = Module(new ExternalRam)
 
-  val st = Module(new StateMachine)
+  core.io.romInst := io.romInst
+  io.romAddr := core.io.romAddr
 
-  val ifUnit = Module(new IfUnit)
-  val idwbUnit = Module(new IdWbUnit)
-  val exUnit = Module(new ExUnit)
-  val memUnit = Module(new MemUnit)
-
-  ifUnit.io.Enable := st.io.clockIF
-  ifUnit.io.jump := idwbUnit.io.jump
-  ifUnit.io.jumpAddress := idwbUnit.io.jumpAddress
-  io.romAddr := ifUnit.io.romAddress
-
-  idwbUnit.io.inst := io.romInst
-  idwbUnit.io.Enable := st.io.clockID
-  idwbUnit.io.wbEnable := st.io.clockWB
-  idwbUnit.io.pc := ifUnit.io.romAddress
-  idwbUnit.io.FLAGS := exUnit.io.out.flag
-
-  exUnit.io.Enable := st.io.clockEX
-  exUnit.io.shifterSig := idwbUnit.io.shifterSig
-  exUnit.io.in.opcode := idwbUnit.io.exOpcode
-  exUnit.io.in.inA := idwbUnit.io.rdData
-  exUnit.io.in.inB := idwbUnit.io.rsData
-  exUnit.io.memWriteDataIn := idwbUnit.io.memWriteData
-
-  memUnit.io.Enable := st.io.clockMEM
-  memUnit.io.address := exUnit.io.out.res
-  memUnit.io.in := exUnit.io.memWriteDataOut
-  memUnit.io.memRead := idwbUnit.io.memRead
-  memUnit.io.memWrite := idwbUnit.io.memWrite
-  memUnit.io.byteEnable := exUnit.io.memByteEnableOut
-  memUnit.io.signExt := exUnit.io.memSignExtOut
-
-  idwbUnit.io.writeData := memUnit.io.out
+  memA.io.address := core.io.memA.address
+  memA.io.in := core.io.memA.in
+  memA.io.writeEnable := core.io.memA.writeEnable
+  core.io.memA.out := memA.io.out
+  memB.io.address := core.io.memB.address
+  memB.io.in := core.io.memB.in
+  memB.io.writeEnable := core.io.memB.writeEnable
+  core.io.memB.out := memB.io.out
 }

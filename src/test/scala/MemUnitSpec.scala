@@ -21,7 +21,7 @@ import scala.util.Random
 
 class MemUnitSpec extends ChiselFlatSpec {
   implicit val conf = RV16KConfig()
-  assert(Driver(() => new MemUnit) {
+  assert(Driver(() => new MemUnitTest) {
     c =>
       new PeekPokeTester(c) {
         poke(c.io.signExt, false)
@@ -29,6 +29,7 @@ class MemUnitSpec extends ChiselFlatSpec {
         poke(c.io.Enable, true)
         poke(c.io.memRead, false)
         poke(c.io.memWrite, false)
+        println("Pass through Test")
         for (i <- 0 until 100) {
           val v = Random.nextInt(0xFFFF)
           poke(c.io.address, v.U(16.W))
@@ -37,6 +38,7 @@ class MemUnitSpec extends ChiselFlatSpec {
           expect(c.io.out, v.U(16.W))
         }
 
+        println("Memory Word Write Test")
         var testDataArray: Array[UInt] = Array.empty
         poke(c.io.memWrite, true)
         for(i <- 0 until 100){

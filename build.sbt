@@ -1,4 +1,4 @@
-name := "rv16k-amethyst"
+name := "rv16k-aquamarine"
 
 version := "0.1"
 

@@ -1,3 +1,3 @@
-# rv16k-amethyst
+# rv16k-aquamarine
 
-2nd generation implementation of VSP Processor
+3rd generation implementation of VSP Processor

@@ -13,21 +13,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import chisel3._
 
-import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
+class ExternalRam(implicit val conf:RV16KConfig) extends Module{
+  val io = IO(new MemPort)
+  val mem = Mem(256, UInt(8.W))
+  val pReg = RegInit(0.U.asTypeOf(new MemPort))
 
-class TopUnitSpec extends ChiselFlatSpec {
-  implicit val conf = RV16KConfig()
-  val rom = new ExternalRom
-  assert(Driver(() => new TopUnit) {
-    c =>
-      new PeekPokeTester(c) {
-        for(i <- 0 until 350){
-          val addr = peek(c.io.romAddr).toInt
-          poke(c.io.romInst, rom.readInst(addr))
-          step(1)
-        }
-      }
-  })
+  pReg.address := io.address
+  pReg.in := io.in
+  pReg.writeEnable := io.writeEnable
+  when(pReg.writeEnable){
+    mem(pReg.address) := pReg.in
+    when(conf.debugMem.B) {
+      printf("[MEM] MemWrite Mem[0x%x] <= Data:0x%x\n", pReg.address, pReg.in)
+    }
+    io.out := pReg.in
+  }.otherwise{
+    io.out := mem(pReg.address)
+  }
 }
-

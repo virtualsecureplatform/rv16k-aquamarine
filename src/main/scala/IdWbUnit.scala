@@ -16,7 +16,6 @@ limitations under the License.
 
 import chisel3._
 import chisel3.util.Cat
-import firrtl.transforms.DeadCodeElimination
 
 class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val inst = Input(UInt(16.W))

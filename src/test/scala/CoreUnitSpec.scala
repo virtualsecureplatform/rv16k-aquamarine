@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import chisel3._
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
-class TopUnitSpec extends ChiselFlatSpec {
+class CoreUnitSpec extends ChiselFlatSpec {
   implicit val conf = RV16KConfig()
   val rom = new ExternalRom
-  assert(Driver(() => new TopUnit) {
+  assert(Driver(() => new CoreUnit) {
     c =>
       new PeekPokeTester(c) {
         for(i <- 0 until 350){
