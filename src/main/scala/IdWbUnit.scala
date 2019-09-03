@@ -185,6 +185,8 @@ class IdRegister extends Bundle {
   val inst = UInt(16.W)
   val pc = UInt(9.W)
   val FLAGS = UInt(4.W)
+  val longInst = UInt(16.W)
+  val longInstState = UInt(2.W)
 }
 
 class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
@@ -193,8 +195,6 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val mainRegister = Module(new MainRegister)
   val decoder = Module(new Decoder)
 
-  val immLongState = RegInit(UInt(2.W), 0.U)
-  val immLongInst = Reg(UInt(16.W))
   val pReg = RegInit(0.U.asTypeOf(new IdRegister))
 
   // 0 -> mainRegister Rs
@@ -225,17 +225,15 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
     pReg.inst := io.inst
     pReg.pc := io.pc
     pReg.FLAGS := io.FLAGS
-    when((io.inst(15,14) != 3.U) && (io.inst(12, 12) === 1.U) && ((immLongState === 0.U) || (immLongState === 2.U))) {
-      immLongInst := io.inst
-      immLongState := 1.U
-    }.elsewhen(immLongState === 1.U) {
-      immLongState := 2.U
-    }.elsewhen(immLongState === 2.U) {
-      immLongState := 0.U
+    when((io.inst(15,14) != 3.U) && (io.inst(12, 12) === 1.U) && ((pReg.longInstState === 0.U) || (pReg.longInstState === 2.U))) {
+      pReg.longInst := io.inst
+      pReg.longInstState := 1.U
+    }.elsewhen(pReg.longInstState === 1.U) {
+      pReg.longInstState := 2.U
+    }.elsewhen(pReg.longInstState === 2.U) {
+      pReg.longInstState := 0.U
     }
   }.otherwise{
-    immLongInst := immLongInst
-    immLongState := immLongState
     pReg := pReg
   }
 
@@ -249,7 +247,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.jumpAddress := DontCare
   decoder.io.inst := 0.U(16.W)
   decoder.io.FLAGS := pReg.FLAGS
-  when(immLongState === 0.U){
+  when(pReg.longInstState === 0.U){
     decoder.io.inst := pReg.inst
     when(decoder.io.immSel) {
       when(pReg.inst(15, 14) === 2.U) {
@@ -273,9 +271,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
         rsDataSrc := 1.U
       }
     }
-  }.elsewhen((immLongState === 2.U) && (immLongInst(15,14) === 1.U)){
-    decoder.io.inst := immLongInst
-    when(immLongInst(11,11) === 1.U){
+  }.elsewhen((pReg.longInstState === 2.U) && (pReg.longInst(15,14) === 1.U)){
+    decoder.io.inst := pReg.longInst
+    when(pReg.longInst(11,11) === 1.U){
       //LI
       rsDataSrc := 2.U
     }.otherwise{
@@ -283,9 +281,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
       rsDataSrc := 3.U
       io.jumpAddress := pReg.pc + pReg.inst
     }
-  }.elsewhen((immLongState === 2.U) && (immLongInst(15,14) === 2.U)){
-    decoder.io.inst := immLongInst
-    when(immLongInst(13, 13) === 1.U) {
+  }.elsewhen((pReg.longInstState === 2.U) && (pReg.longInst(15,14) === 2.U)){
+    decoder.io.inst := pReg.longInst
+    when(pReg.longInst(13, 13) === 1.U) {
       //LW,LB,LBU
       rdDataSrc := 2.U
     }.otherwise{
@@ -313,8 +311,8 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   debug := io.Enable&&conf.debugId.B
   when(debug){
     printf("[ID] Instruction:0x%x\n", io.inst)
-    printf("[ID] ImmLongState:0x%x\n", immLongState)
-    printf("[ID] ImmLongInst:0x%x\n", immLongInst)
+    printf("[ID] LongInstState:0x%x\n", pReg.longInstState)
+    printf("[ID] LongInst:0x%x\n", pReg.longInst)
     printf("[ID] Decoder Inst:0x%x\n", decoder.io.inst)
     when(io.jump) {
       printf("[ID] JumpAddress:0x%x\n", io.jumpAddress)
@@ -323,5 +321,5 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.debugRs := decoder.io.rs
   io.debugRd := decoder.io.rd
   io.debugRegWrite := decoder.io.writeEnable
-  io.debugImmLongState := immLongState
+  io.debugImmLongState := pReg.longInstState
 }
