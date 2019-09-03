@@ -64,5 +64,4 @@ class DataRam extends Module{
       io.out := Cat(memory_upper(addr), memory_lower(addr))
     }
   }
-
 }

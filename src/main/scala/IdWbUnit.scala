@@ -197,6 +197,30 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val immLongInst = Reg(UInt(16.W))
   val pReg = RegInit(0.U.asTypeOf(new IdRegister))
 
+  // 0 -> mainRegister Rs
+  // 1 -> decoder.imm
+  // 2 -> inst
+  // 3 -> PC+2
+  val rsDataSrc = Wire(UInt(2.W))
+  when(rsDataSrc === 0.U){
+    io.rsData := mainRegister.io.rsData
+  }.elsewhen(rsDataSrc === 1.U){
+    io.rsData := decoder.io.imm
+  }.elsewhen(rsDataSrc === 2.U){
+    io.rsData := pReg.inst
+  }.otherwise{
+    io.rsData := pReg.pc + 2.U
+  }
+
+  val rdDataSrc = Wire(UInt(2.W))
+  when(rdDataSrc === 0.U){
+    io.rdData := mainRegister.io.rdData
+  }.elsewhen(rdDataSrc === 1.U){
+    io.rdData := decoder.io.imm
+  }.otherwise{
+    io.rdData := pReg.inst
+  }
+
   when(io.Enable) {
     pReg.inst := io.inst
     pReg.pc := io.pc
@@ -219,9 +243,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   mainRegister.io.rs := decoder.io.rs
   mainRegister.io.rd := decoder.io.rd
 
-  io.rsData := mainRegister.io.rsData
+  rsDataSrc := 0.U
+  rdDataSrc := 0.U
   io.memWriteData := mainRegister.io.rsData
-  io.rdData := mainRegister.io.rdData
   io.jumpAddress := DontCare
   decoder.io.inst := 0.U(16.W)
   decoder.io.FLAGS := pReg.FLAGS
@@ -231,10 +255,10 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
       when(pReg.inst(15, 14) === 2.U) {
         when(pReg.inst(13, 13) === 1.U) {
           //LWSP
-          io.rdData := decoder.io.imm
+          rdDataSrc := 1.U
         }.otherwise {
           //SWSP
-          io.rsData := decoder.io.imm
+          rsDataSrc := 1.U
         }
       }.elsewhen(pReg.inst(15, 14) === 1.U){
         when(pReg.inst(10, 10) === 1.U){
@@ -243,30 +267,30 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
         }.otherwise{
           //JALR,JR
           io.jumpAddress := mainRegister.io.rsData
-          io.rsData := pReg.pc + 2.U
+          rsDataSrc := 3.U
         }
       }.otherwise {
-        io.rsData := decoder.io.imm
+        rsDataSrc := 1.U
       }
     }
   }.elsewhen((immLongState === 2.U) && (immLongInst(15,14) === 1.U)){
     decoder.io.inst := immLongInst
     when(immLongInst(11,11) === 1.U){
       //LI
-      io.rsData := pReg.inst
+      rsDataSrc := 2.U
     }.otherwise{
       //J,JAL
-      io.rsData := pReg.pc + 2.U
+      rsDataSrc := 3.U
       io.jumpAddress := pReg.pc + pReg.inst
     }
   }.elsewhen((immLongState === 2.U) && (immLongInst(15,14) === 2.U)){
     decoder.io.inst := immLongInst
     when(immLongInst(13, 13) === 1.U) {
       //LW,LB,LBU
-      io.rdData := pReg.inst
+      rdDataSrc := 2.U
     }.otherwise{
       //SW,SB
-      io.rsData := pReg.inst
+      rsDataSrc := 2.U
     }
   }
 

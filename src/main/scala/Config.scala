@@ -4,4 +4,7 @@ case class RV16KConfig() {
   val debugEx = true
   val debugMem = true
   val debugWb = true
+
+  val romAddrWidth = 9
+
 }

@@ -16,9 +16,9 @@ limitations under the License.
 
 import chisel3._
 
-class CoreUnitPort extends Bundle {
+class CoreUnitPort (implicit val conf: RV16KConfig) extends Bundle {
   val romInst = Input(UInt(16.W))
-  val romAddr = Output(UInt(9.W))
+  val romAddr = Output(UInt(conf.romAddrWidth.W))
   val memA = Flipped(new MemPort)
   val memB = Flipped(new MemPort)
 }
