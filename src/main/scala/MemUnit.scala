@@ -34,11 +34,18 @@ class MemUnitPort extends Bundle {
   val byteEnable = Input(Bool())
   val signExt = Input(Bool())
   val Enable = Input(Bool())
+  val regWriteEnableIn = Input(Bool())
 
   val memA = Flipped(new MemPort)
   val memB = Flipped(new MemPort)
 
   val out = Output(UInt(16.W))
+  val regWriteEnableOut = Output(Bool())
+}
+
+class MemReg extends Bundle {
+  val regWriteEnable = Bool()
+  val outData = UInt(16.W)
 }
 
 class MemUnitTestPort extends Bundle{
@@ -79,6 +86,14 @@ class MemUnitTest(implicit val conf:RV16KConfig) extends Module {
 
 class MemUnit(implicit val conf:RV16KConfig) extends Module {
   val io = IO(new MemUnitPort)
+
+  val pReg = RegInit(0.U.asTypeOf(new MemReg))
+
+  when(io.Enable){
+    pReg.regWriteEnable := io.regWriteEnableIn
+    pReg.outData := io.address
+  }
+  io.regWriteEnableOut := pReg.regWriteEnable
 
   def sign_ext_8bit(v:UInt) : UInt = {
     val res = Wire(UInt(16.W))
@@ -139,14 +154,15 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
       io.out := Cat(io.memA.out, io.memB.out)
     }
   }.otherwise{
-    io.out := io.address
+    io.out := pReg.outData
   }
 
-  val debug = RegInit(false.B)
-  debug := io.Enable&&conf.debugMem.B
-  when(debug){
+  when(conf.debugMem.B){
     when(io.memRead) {
       printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", io.address, io.out)
+    }
+    when(pReg.regWriteEnable){
+      printf("[MEM] RegWriteData:0x%x\n", io.out)
     }
   }
 }

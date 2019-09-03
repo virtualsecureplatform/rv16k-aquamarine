@@ -50,14 +50,18 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   exUnit.io.in.inA := idwbUnit.io.rdData
   exUnit.io.in.inB := idwbUnit.io.rsData
   exUnit.io.memWriteDataIn := idwbUnit.io.memWriteData
+  exUnit.io.memReadIn := idwbUnit.io.memRead
+  exUnit.io.memWriteIn := idwbUnit.io.memWrite
+  exUnit.io.regWriteEnableIn := idwbUnit.io.regWriteEnableOut
 
   memUnit.io.Enable := st.io.clockMEM
   memUnit.io.address := exUnit.io.out.res
   memUnit.io.in := exUnit.io.memWriteDataOut
-  memUnit.io.memRead := idwbUnit.io.memRead
-  memUnit.io.memWrite := idwbUnit.io.memWrite
+  memUnit.io.memRead := exUnit.io.memReadOut
+  memUnit.io.memWrite := exUnit.io.memWriteOut
   memUnit.io.byteEnable := exUnit.io.memByteEnableOut
   memUnit.io.signExt := exUnit.io.memSignExtOut
+  memUnit.io.regWriteEnableIn := exUnit.io.regWriteEnableOut
   io.memA.address := memUnit.io.memA.address
   io.memA.in := memUnit.io.memA.in
   io.memA.writeEnable := memUnit.io.memA.writeEnable
@@ -68,4 +72,5 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   memUnit.io.memB.out := io.memB.out
 
   idwbUnit.io.writeData := memUnit.io.out
+  idwbUnit.io.regWriteEnableIn := memUnit.io.regWriteEnableOut
 }
