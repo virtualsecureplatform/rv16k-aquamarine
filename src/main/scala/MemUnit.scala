@@ -35,16 +35,24 @@ class MemUnitPort extends Bundle {
   val signExt = Input(Bool())
   val Enable = Input(Bool())
   val regWriteEnableIn = Input(Bool())
+  val regWriteIn = Input(UInt(4.W))
 
   val memA = Flipped(new MemPort)
   val memB = Flipped(new MemPort)
 
   val out = Output(UInt(16.W))
   val regWriteEnableOut = Output(Bool())
+  val regWriteOut = Output(UInt(4.W))
 }
 
 class MemReg extends Bundle {
+  val address = UInt(16.W)
+  val memRead = Bool()
+  val byteEnable = Bool()
+  val signExt = Bool()
+
   val regWriteEnable = Bool()
+  val regWrite = UInt(4.W)
   val outData = UInt(16.W)
 }
 
@@ -90,10 +98,17 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
   val pReg = RegInit(0.U.asTypeOf(new MemReg))
 
   when(io.Enable){
+    pReg.address := io.address
+    pReg.memRead := io.memRead
+    pReg.signExt := io.signExt
+    pReg.byteEnable := io.byteEnable
+
     pReg.regWriteEnable := io.regWriteEnableIn
+    pReg.regWrite := io.regWriteIn
     pReg.outData := io.address
   }
   io.regWriteEnableOut := pReg.regWriteEnable
+  io.regWriteOut := pReg.regWrite
 
   def sign_ext_8bit(v:UInt) : UInt = {
     val res = Wire(UInt(16.W))
@@ -135,16 +150,16 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
   }
 
   io.out := DontCare
-  when(io.memRead){
-    when(io.byteEnable){
-      when(io.address(0,0) === 1.U){
-        when(io.signExt){
+  when(pReg.memRead){
+    when(pReg.byteEnable){
+      when(pReg.address(0,0) === 1.U){
+        when(pReg.signExt){
           io.out := sign_ext_8bit(io.memA.out)
         }.otherwise{
           io.out := io.memA.out
         }
       }.otherwise{
-        when(io.signExt){
+        when(pReg.signExt){
           io.out := sign_ext_8bit(io.memB.out)
         }.otherwise{
           io.out := io.memB.out
@@ -158,11 +173,8 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
   }
 
   when(conf.debugMem.B){
-    when(io.memRead) {
-      printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", io.address, io.out)
-    }
-    when(pReg.regWriteEnable){
-      printf("[MEM] RegWriteData:0x%x\n", io.out)
+    when(pReg.memRead) {
+      printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", pReg.address, io.out)
     }
   }
 }

@@ -43,6 +43,7 @@ class ExIO extends Bundle {
   val memReadIn = Input(Bool())
   val memWriteIn = Input(Bool())
   val regWriteEnableIn = Input(Bool())
+  val regWriteIn = Input(UInt(4.W))
 
   val out = new ExUnitOutput
   val memWriteDataOut = Output(UInt(16.W))
@@ -51,6 +52,7 @@ class ExIO extends Bundle {
   val memReadOut = Output(Bool())
   val memWriteOut = Output(Bool())
   val regWriteEnableOut = Output(Bool())
+  val regWriteOut = Output(UInt(4.W))
 }
 
 class ExReg extends Bundle {
@@ -66,6 +68,7 @@ class ExReg extends Bundle {
   val memWrite = Bool()
 
   val regWriteEnable = Bool()
+  val regWrite = UInt(4.W)
 }
 
 class ExUnit(implicit val conf:RV16KConfig) extends Module {
@@ -85,6 +88,7 @@ class ExUnit(implicit val conf:RV16KConfig) extends Module {
     pReg.memRead := io.memReadIn
     pReg.memWrite := io.memWriteIn
     pReg.regWriteEnable := io.regWriteEnableIn
+    pReg.regWrite := io.regWriteIn
   }
 
   alu.io.in.opcode := pReg.opcode
@@ -105,6 +109,7 @@ class ExUnit(implicit val conf:RV16KConfig) extends Module {
   io.memReadOut := pReg.memRead
   io.memWriteOut := pReg.memWrite
   io.regWriteEnableOut := pReg.regWriteEnable
+  io.regWriteOut := pReg.regWrite
 
   when(conf.debugEx.B) {
     printf("[EX] opcode:0x%x\n", pReg.opcode)

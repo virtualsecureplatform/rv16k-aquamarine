@@ -19,6 +19,7 @@ import chisel3._
 class MainRegisterPort extends Bundle {
   val rs = Input(UInt(4.W))
   val rd = Input(UInt(4.W))
+  val writeReg = Input(UInt(4.W))
   val writeEnable = Input(Bool())
   val writeData = Input(UInt(16.W))
 
@@ -35,7 +36,7 @@ class MainRegister(implicit val conf:RV16KConfig) extends Module{
   io.rdData := MainReg(io.rd)
 
   when(io.writeEnable&&conf.debugWb.B) {
-    MainReg(io.rd) := io.writeData
-    printf("[WB] Reg x%d <= 0x%x\n", io.rd, io.writeData)
+    MainReg(io.writeReg) := io.writeData
+    printf("[WB] Reg x%d <= 0x%x\n", io.writeReg, io.writeData)
   }.otherwise {}
 }

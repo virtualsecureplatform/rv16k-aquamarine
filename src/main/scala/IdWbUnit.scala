@@ -25,6 +25,7 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val pc = Input(UInt(9.W))
   val FLAGS = Input(UInt(4.W))
   val regWriteEnableIn = Input(Bool())
+  val regWriteIn = Input(UInt(4.W))
 
   val memWriteData = Output(UInt(16.W))
   val exOpcode = Output(UInt(3.W))
@@ -41,6 +42,7 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val jump = Output(Bool())
 
   val regWriteEnableOut = Output(Bool())
+  val regWriteOut = Output(UInt(4.W))
 
   val debugRs = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
   val debugRd = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
@@ -243,6 +245,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
 
   mainRegister.io.rs := decoder.io.rs
   mainRegister.io.rd := decoder.io.rd
+  mainRegister.io.writeReg := io.regWriteIn
 
   rsDataSrc := 0.U
   rdDataSrc := 0.U
@@ -311,6 +314,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.memSignExt := decoder.io.memSignExt
 
   io.regWriteEnableOut := decoder.io.writeEnable
+  io.regWriteOut := decoder.io.rd
 
   when(conf.debugId.B){
     printf("[ID] Instruction:0x%x\n", io.inst)
