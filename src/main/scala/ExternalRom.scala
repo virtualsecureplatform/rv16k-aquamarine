@@ -16,7 +16,7 @@ limitations under the License.
 import scala.io.Source
 
 class ExternalRom {
-  val source = Source.fromFile("src/test/binary/test3.bin")
+  val source = Source.fromFile("src/test/binary/test4.bin")
   val lines = source.getLines
 
   var instRom:Array[Int] = Array.empty

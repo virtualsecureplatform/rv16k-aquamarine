@@ -27,6 +27,13 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val regWriteEnableIn = Input(Bool())
   val regWriteIn = Input(UInt(4.W))
 
+  val exFwdData = Input(UInt(16.W))
+  val exRegWrite = Input(UInt(4.W))
+  val exRegWriteEnable = Input(Bool())
+  val memFwdData = Input(UInt(16.W))
+  val memRegWrite = Input(UInt(4.W))
+  val memRegWriteEnable = Input(Bool())
+
   val memWriteData = Output(UInt(16.W))
   val exOpcode = Output(UInt(3.W))
   val shifterSig = Output(Bool())
@@ -43,6 +50,7 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
 
   val regWriteEnableOut = Output(Bool())
   val regWriteOut = Output(UInt(4.W))
+
 
   val debugRs = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
   val debugRd = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
@@ -203,12 +211,18 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val pReg = RegInit(0.U.asTypeOf(new IdRegister))
 
   // 0 -> mainRegister Rs
-  // 1 -> decoder.imm
-  // 2 -> inst
   // 3 -> PC+2
   val rsDataSrc = Wire(UInt(2.W))
   when(rsDataSrc === 0.U){
-    io.rsData := mainRegister.io.rsData
+    when(decoder.io.rs === io.exRegWrite && io.exRegWriteEnable === true.B){
+      printf("[ID] Forward RS from EX Stage\n")
+      io.rsData := io.exFwdData
+    }.elsewhen(decoder.io.rs === io.memRegWrite && io.memRegWriteEnable === true.B){
+      printf("[ID] Forward RS from MEM Stage\n")
+      io.rsData := io.memFwdData
+    }.otherwise{
+      io.rsData := mainRegister.io.rsData
+    }
   }.elsewhen(rsDataSrc === 1.U){
     io.rsData := decoder.io.imm
   }.elsewhen(rsDataSrc === 2.U){
@@ -219,7 +233,15 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
 
   val rdDataSrc = Wire(UInt(2.W))
   when(rdDataSrc === 0.U){
-    io.rdData := mainRegister.io.rdData
+    when(decoder.io.rd === io.exRegWrite && io.exRegWriteEnable === true.B){
+      printf("[ID] Forward RD from EX Stage\n")
+      io.rdData := io.exFwdData
+    }.elsewhen(decoder.io.rd === io.memRegWrite && io.memRegWriteEnable === true.B){
+      printf("[ID] Forward RD from MEM Stage\n")
+      io.rdData := io.memFwdData
+    }.otherwise{
+      io.rdData := mainRegister.io.rdData
+    }
   }.elsewhen(rdDataSrc === 1.U){
     io.rdData := decoder.io.imm
   }.otherwise{

@@ -43,6 +43,8 @@ class MemUnitPort extends Bundle {
   val out = Output(UInt(16.W))
   val regWriteEnableOut = Output(Bool())
   val regWriteOut = Output(UInt(4.W))
+
+  val fwdData = Output(UInt(16.W))
 }
 
 class MemReg extends Bundle {
@@ -109,6 +111,7 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
   }
   io.regWriteEnableOut := pReg.regWriteEnable
   io.regWriteOut := pReg.regWrite
+  io.fwdData := io.out
 
   def sign_ext_8bit(v:UInt) : UInt = {
     val res = Wire(UInt(16.W))

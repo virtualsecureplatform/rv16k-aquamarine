@@ -53,6 +53,8 @@ class ExIO extends Bundle {
   val memWriteOut = Output(Bool())
   val regWriteEnableOut = Output(Bool())
   val regWriteOut = Output(UInt(4.W))
+
+  val fwdData = Output(UInt(16.W))
 }
 
 class ExReg extends Bundle {
@@ -110,6 +112,7 @@ class ExUnit(implicit val conf:RV16KConfig) extends Module {
   io.memWriteOut := pReg.memWrite
   io.regWriteEnableOut := pReg.regWriteEnable
   io.regWriteOut := pReg.regWrite
+  io.fwdData := io.out.res
 
   when(conf.debugEx.B) {
     printf("[EX] opcode:0x%x\n", pReg.opcode)

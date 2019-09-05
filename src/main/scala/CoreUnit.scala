@@ -76,4 +76,10 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   idwbUnit.io.writeData := memUnit.io.out
   idwbUnit.io.regWriteEnableIn := memUnit.io.regWriteEnableOut
   idwbUnit.io.regWriteIn := memUnit.io.regWriteOut
+  idwbUnit.io.exRegWrite := exUnit.io.regWriteOut
+  idwbUnit.io.exRegWriteEnable := exUnit.io.regWriteEnableOut
+  idwbUnit.io.exFwdData := exUnit.io.fwdData
+  idwbUnit.io.memRegWrite := memUnit.io.regWriteOut
+  idwbUnit.io.memRegWriteEnable := memUnit.io.regWriteEnableOut
+  idwbUnit.io.memFwdData := memUnit.io.fwdData
 }
