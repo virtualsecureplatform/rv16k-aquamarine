@@ -33,7 +33,7 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   val exUnit = Module(new ExUnit)
   val memUnit = Module(new MemUnit)
 
-  ifUnit.io.Enable := st.io.clockIF
+  ifUnit.io.Enable := st.io.clockIF&&(!idwbUnit.io.ifStole)
   ifUnit.io.jump := idwbUnit.io.jump
   ifUnit.io.jumpAddress := idwbUnit.io.jumpAddress
   io.romAddr := ifUnit.io.romAddress
@@ -79,6 +79,8 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   idwbUnit.io.exRegWrite := exUnit.io.regWriteOut
   idwbUnit.io.exRegWriteEnable := exUnit.io.regWriteEnableOut
   idwbUnit.io.exFwdData := exUnit.io.fwdData
+  idwbUnit.io.exMemRead := exUnit.io.memReadOut
+  idwbUnit.io.exMemWrite := exUnit.io.memWriteOut
   idwbUnit.io.memRegWrite := memUnit.io.regWriteOut
   idwbUnit.io.memRegWriteEnable := memUnit.io.regWriteEnableOut
   idwbUnit.io.memFwdData := memUnit.io.fwdData
