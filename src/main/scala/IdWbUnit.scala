@@ -127,6 +127,7 @@ class Decoder extends Module {
     io.memWrite := false.B
   }.elsewhen(io.inst(15, 14) === 1.U){
     //J-Instruction
+    printf("[ID] FLAGS:0x%x\n", io.FLAGS)
     io.exOpcode := 0.U(3.W)
     io.shifterSig := false.B
     io.memRead := false.B
@@ -211,10 +212,12 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val mainRegister = Module(new MainRegister)
   val decoder = Module(new Decoder)
 
+  val idFlush = Wire(Bool())
   val idStole = Wire(Bool())
 
   io.ifStole := false.B
   idStole := false.B
+  idFlush := false.B
 
   val pReg = RegInit(0.U.asTypeOf(new IdRegister))
 
@@ -273,7 +276,13 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
       }
     }
   }
-  when(io.Enable&&(!idStole)) {
+  when(idFlush){
+    pReg.inst := 0.U
+    pReg.pc := io.pc
+    pReg.FLAGS := io.FLAGS
+    pReg.longInstState := 0.U
+    printf("[ID] ID Flush\n")
+  }.elsewhen(io.Enable&&(!idStole)) {
     pReg.inst := io.inst
     pReg.pc := io.pc
     pReg.FLAGS := io.FLAGS
@@ -297,7 +306,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   rdDataSrc := 0.U
   io.jumpAddress := DontCare
   decoder.io.inst := 0.U(16.W)
-  decoder.io.FLAGS := pReg.FLAGS
+  decoder.io.FLAGS := io.FLAGS
   when(pReg.longInstState === 0.U) {
     decoder.io.inst := pReg.inst
     when(decoder.io.immSel) {
@@ -317,6 +326,13 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
           //JALR,JR
           io.jumpAddress := mainRegister.io.rsData
           rsDataSrc := 3.U
+          when(decoder.io.rs === io.exRegWrite && io.exRegWriteEnable ){
+            io.jumpAddress := io.exFwdData
+          }.elsewhen(decoder.io.rs === io.memRegWrite && io.memRegWriteEnable){
+            io.jumpAddress := io.memFwdData
+          }.otherwise{
+            io.jumpAddress := mainRegister.io.rsData
+          }
         }
       }.otherwise {
         rsDataSrc := 1.U
@@ -360,6 +376,8 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
 
   io.regWriteEnableOut := decoder.io.writeEnable&&(!idStole)
   io.regWriteOut := decoder.io.rd
+
+  idFlush := io.jump
 
   when(conf.debugId.B){
     printf("[ID] Instruction:0x%x\n", io.inst)
