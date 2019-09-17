@@ -75,6 +75,11 @@ int main(int argc, char* argv[]){
                 uint16_t hex = obj[j] + (obj[j+1]<<8);
                 printf("%04X %04X\n", j, hex);
             }
+            for(int j=0;j<Shdr[i].sh_size;j+=2){
+                uint16_t hex = obj[j] + (obj[j+1]<<8);
+                printf("0x%04X, ", hex);
+            }
+            printf("\n");
         }
     }
 }
