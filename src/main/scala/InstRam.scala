@@ -16,15 +16,15 @@ limitations under the License.
 
 import chisel3._
 
-class InstRomPort extends Bundle {
+class InstRamPort extends Bundle {
   val address = Input(UInt(9.W))
 
   val out = Output(UInt(16.W))
 
 }
 
-class InstRom extends Module {
-  val io = IO(new InstRomPort);
+class InstRam extends Module {
+  val io = IO(new InstRamPort);
 
   val rom = Mem(256, UInt(16.W))
 
