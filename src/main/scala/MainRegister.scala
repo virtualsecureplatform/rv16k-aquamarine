@@ -16,7 +16,7 @@ limitations under the License.
 
 import chisel3._
 
-class MainRegisterPort extends Bundle {
+class MainRegisterPort(implicit val conf:RV16KConfig) extends Bundle {
   val rs = Input(UInt(4.W))
   val rd = Input(UInt(4.W))
   val writeReg = Input(UInt(4.W))
@@ -25,6 +25,8 @@ class MainRegisterPort extends Bundle {
 
   val rsData = Output(UInt(16.W))
   val rdData = Output(UInt(16.W))
+
+  val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
 }
 
 class MainRegister(implicit val conf:RV16KConfig) extends Module{
@@ -35,8 +37,12 @@ class MainRegister(implicit val conf:RV16KConfig) extends Module{
   io.rsData := MainReg(io.rs)
   io.rdData := MainReg(io.rd)
 
-  when(io.writeEnable&&conf.debugWb.B) {
-    MainReg(io.writeReg) := io.writeData
-    printf("[WB] Reg x%d <= 0x%x\n", io.writeReg, io.writeData)
+  when(io.writeEnable) {
+    MainReg(io.rd) := io.writeData
+    when(conf.debugWb.B) {
+      printf("[WB] Reg x%d <= 0x%x\n", io.rd, io.writeData)
+    }
   }.otherwise {}
+
+  io.testRegx8 := MainReg(8)
 }

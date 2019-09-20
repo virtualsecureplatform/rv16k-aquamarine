@@ -8,6 +8,8 @@
 
 //#define DEBUG
 
+#define DATA_RAM_SIZE 512
+
 int main(int argc, char* argv[]){
     struct stat st;
     FILE *fp;
@@ -73,13 +75,33 @@ int main(int argc, char* argv[]){
             uint8_t *obj = (uint8_t *)(file_buffer+Shdr[i].sh_offset);
             for(int j=0;j<Shdr[i].sh_size;j+=2){
                 uint16_t hex = obj[j] + (obj[j+1]<<8);
-                printf("%04X %04X\n", j, hex);
+                printf("ROM %04X %04X\n", j, hex);
             }
+            /*
             for(int j=0;j<Shdr[i].sh_size;j+=2){
                 uint16_t hex = obj[j] + (obj[j+1]<<8);
                 printf("0x%04X, ", hex);
             }
+            */
             printf("\n");
+        }
+        else if (0x00010000 <= Shdr[i].sh_addr && Shdr[i].sh_addr <= 0x0001ffff) {  // RAM
+            uint8_t *obj = (uint8_t *)(file_buffer+Shdr[i].sh_offset);
+            uint8_t data_ram_offset = Shdr[i].sh_addr & 0x0000ffff;
+
+            if (strcmp(".bss", name) == 0) {
+                // .bss section shouldn't be loaded to RAM, but be placed after all other sections.
+                // FIXME: Check if this sections is placed after all other sections.
+                continue;
+            }
+
+            for(int j=0;j<Shdr[i].sh_size;j+=2){
+                assert(data_ram_offset + j + 1 < DATA_RAM_SIZE && "Too large data (.data/.rodata).");
+
+                uint16_t hex = obj[j] + (obj[j+1]<<8);
+                printf("RAM: %04X %04X\n", data_ram_offset + j, hex);
+            }
+            puts("");
         }
     }
 }
