@@ -16,9 +16,11 @@ limitations under the License.
 
 import chisel3._
 
-class TopUnitPort extends Bundle {
+class TopUnitPort(implicit val conf:RV16KConfig) extends Bundle {
   val romInst = Input(UInt(16.W))
   val romAddr = Output(UInt(9.W))
+
+  val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
 }
 class TopUnit(implicit val conf:RV16KConfig) extends Module{
   val io = IO(new TopUnitPort)
@@ -37,4 +39,6 @@ class TopUnit(implicit val conf:RV16KConfig) extends Module{
   memB.io.in := core.io.memB.in
   memB.io.writeEnable := core.io.memB.writeEnable
   core.io.memB.out := memB.io.out
+
+  io.testRegx8 := core.io.testRegx8
 }

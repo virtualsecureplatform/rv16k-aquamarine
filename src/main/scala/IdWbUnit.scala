@@ -43,6 +43,8 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val debugRd = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
   val debugRegWrite = if(conf.debugId) Output(Bool()) else Output(UInt(0.W))
   val debugImmLongState = if(conf.debugId) Output(Bool()) else Output(UInt(0.W))
+
+  val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
 }
 
 class LongImm extends Bundle {
@@ -300,4 +302,5 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.debugRd := decoder.io.rd
   io.debugRegWrite := decoder.io.writeEnable
   io.debugImmLongState := immLongState
+  io.testRegx8 := mainRegister.io.testRegx8
 }
