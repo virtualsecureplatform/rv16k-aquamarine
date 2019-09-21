@@ -13,17 +13,38 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import scala.io.Source
 
-class ExternalRom(romData:Map[Int,Int]) {
-  var finFlag = false
-  def readInst(addr:Int):Int = {
-    val data = romData.get(addr)
+class ExternalTestRam(ram:Map[Int,Int]) {
+  var write = false
+  var addr = 0;
+  var data = 0;
+  var ramData:Map[Int, Int] = ram
+
+  def step(writeIn:Boolean, addrIn:Int, dataIn:Int): Unit ={
+    if(write){
+      memWrite()
+    }else{
+      memRead()
+    }
+    fetch(writeIn, addrIn, dataIn)
+  }
+  def fetch(writeIn:Boolean, addrIn:Int, dataIn:Int): Unit ={
+    write = writeIn
+    addr = addrIn
+    data = dataIn
+  }
+
+  def memRead():Int = {
+    val data = ramData.get(addr)
     if(data.isDefined){
       data.get
     }else{
-      finFlag = true
       0
     }
   }
+
+  def memWrite() = {
+    ramData = ramData.updated(addr, data)
+  }
+
 }

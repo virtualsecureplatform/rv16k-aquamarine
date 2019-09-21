@@ -22,6 +22,7 @@ class TopUnitPort(implicit val conf:RV16KConfig) extends Bundle {
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
 }
+
 class TopUnit(implicit val conf:RV16KConfig) extends Module{
   val io = IO(new TopUnitPort)
   val core = Module(new CoreUnit)
