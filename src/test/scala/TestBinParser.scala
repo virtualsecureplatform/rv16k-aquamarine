@@ -4,7 +4,8 @@ class TestBinParser(filePath: String) {
   val source = Source.fromFile(filePath)
   val lines = source.getLines
 
-  var ramData = Map[Int, Int]()
+  var memAData = Map[Int, Int]()
+  var memBData = Map[Int, Int]()
   var romData = Map[Int, Int]()
   var res = 0
   var cycle = 0
@@ -21,7 +22,11 @@ class TestBinParser(filePath: String) {
         romData += (addr->data)
       }
       else if(tokens(0).contains("RAM")){
-        ramData += (addr->data)
+        if(addr%2 == 1){
+          memAData += (addr->data)
+        }else{
+          memBData += (addr->data)
+        }
       }
     }
     else if(tokens.length == 2){
