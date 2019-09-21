@@ -14,20 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import java.io.File
+
 import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
-class TopUnitSpec extends ChiselFlatSpec {
+class TopUnitSpec() extends ChiselFlatSpec {
   implicit val conf = RV16KConfig()
-  val rom = new ExternalRom
-  assert(Driver(() => new TopUnit) {
-    c =>
-      new PeekPokeTester(c) {
-        for(i <- 0 until 350){
-          val addr = peek(c.io.romAddr).toInt
-          poke(c.io.romInst, rom.readInst(addr))
-          step(1)
-        }
-      }
-  })
+  conf.debugIf = false
+  conf.debugId = false
+  conf.debugEx = false
+  conf.debugMem = false
+  conf.debugWb = false
+  conf.test = true
+
+  val testDir = new File("src/test/binary/")
+
+  testDir.listFiles().foreach { f =>
+    if(f.getName().contains(".bin")) {
+      val parser = new TestBinParser(f.getAbsolutePath())
+      val rom = new ExternalRom(parser.romData)
+      assert(Driver(() => new TopUnit) {
+        c =>
+          new PeekPokeTester(c) {
+            for (i <- 0 until parser.cycle) {
+              val addr = peek(c.io.romAddr).toInt
+              poke(c.io.romInst, rom.readInst(addr))
+              step(1)
+            }
+            expect(c.io.testRegx8, parser.res)
+          }
+      })
+    }
+  }
 }
 

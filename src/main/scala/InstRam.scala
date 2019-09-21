@@ -13,17 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import scala.io.Source
 
-class ExternalRom(romData:Map[Int,Int]) {
-  var finFlag = false
-  def readInst(addr:Int):Int = {
-    val data = romData.get(addr)
-    if(data.isDefined){
-      data.get
-    }else{
-      finFlag = true
-      0
-    }
-  }
+import chisel3._
+
+class InstRamPort extends Bundle {
+  val address = Input(UInt(9.W))
+
+  val out = Output(UInt(16.W))
+
+}
+
+class InstRam extends Module {
+  val io = IO(new InstRamPort);
+
+  val rom = Mem(256, UInt(16.W))
+
+  io.out := rom(io.address(8,1))
 }
