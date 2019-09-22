@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Naoki Matsumoto
+Copyright 2019 Kotaro MATSUOKA
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,18 +15,21 @@ limitations under the License.
 */
 
 import chisel3._
+import chisel3.util.MuxLookup
 
-class InstRamPort extends Bundle {
+class LURomPort extends Bundle {
   val address = Input(UInt(9.W))
+  val rom = Vec(256,Input(UInt(16.W)))
 
   val out = Output(UInt(16.W))
 
 }
 
-class InstRam extends Module {
-  val io = IO(new InstRamPort);
-
-  val rom = Mem(256, UInt(16.W))
-
-  io.out := rom(io.address(8,1))
+class LURom extends Module {
+  val io = IO(new LURomPort);
+  var data: Array[(chisel3.core.UInt,chisel3.core.Data)] = Array.empty
+  for(i <- 0 to 255){
+      data = data :+ (i.U -> io.rom(i))
+  }
+  io.out := MuxLookup(io.address,0.U,data)
 }
