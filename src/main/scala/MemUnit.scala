@@ -76,6 +76,7 @@ class MemUnitTest(implicit val conf:RV16KConfig) extends Module {
   val memA = Module(new ExternalRam)
   val memB = Module(new ExternalRam)
 
+
   unit.io.in := io.in
   unit.io.address := io.address
   unit.io.memRead := io.memRead
@@ -122,6 +123,13 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
     }
     res
   }
+  when(io.Enable){
+    pReg.byteEnable := io.byteEnable
+    pReg.memRead := io.memRead
+    pReg.signExt := io.signExt
+    pReg.address := io.address
+  }
+
 
   val addr = Wire(UInt(8.W))
   val data_upper = io.in(15, 8)
@@ -178,6 +186,9 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
   when(conf.debugMem.B){
     when(pReg.memRead) {
       printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", pReg.address, io.out)
+    }
+    when(io.memWrite) {
+      printf("[MEM] MemWrite Mem[0x%x] <= Data:0x%x\n", io.address, io.in)
     }
   }
 }

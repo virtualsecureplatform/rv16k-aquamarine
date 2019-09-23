@@ -27,6 +27,7 @@ class MainRegisterPort(implicit val conf:RV16KConfig) extends Bundle {
   val rdData = Output(UInt(16.W))
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
+  val testPC = if(conf.test) Input(UInt(9.W)) else Input(UInt(0.W))
 }
 
 class MainRegister(implicit val conf:RV16KConfig) extends Module{
@@ -40,7 +41,7 @@ class MainRegister(implicit val conf:RV16KConfig) extends Module{
   when(io.writeEnable) {
     MainReg(io.rd) := io.writeData
     when(conf.debugWb.B) {
-      printf("[WB] Reg x%d <= 0x%x\n", io.rd, io.writeData)
+      printf("%x Reg x%d <= 0x%x\n", io.testPC, io.rd, io.writeData)
     }
   }.otherwise {}
 

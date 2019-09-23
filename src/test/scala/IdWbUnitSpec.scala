@@ -19,6 +19,12 @@ import chisel3.iotesters.{ChiselFlatSpec, Driver, PeekPokeTester}
 
 class IdWbUnitSpec extends ChiselFlatSpec {
   implicit val conf = RV16KConfig()
+  conf.debugIf = false
+  conf.debugId = false
+  conf.debugEx = false
+  conf.debugMem = false
+  conf.debugWb = false
+  conf.test = true
   assert(Driver(() => new IdWbUnit) {
     c =>
       new PeekPokeTester(c) {

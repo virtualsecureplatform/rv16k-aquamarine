@@ -140,10 +140,13 @@ class ALU extends Module {
     flagCarry := ~resCarry(16)
     flagOverflow := FLAGS.check_overflow(io.in.inA, io.in.inB, io.out.res)
   }.elsewhen(io.in.opcode === ALUOpcode.SUB) {
-    resCarry := io.in.inA +& ((~io.in.inB)+1.U)
+    val inB_sub = Wire(UInt(16.W))
+    inB_sub := (~io.in.inB).asUInt()+1.U
+    resCarry := io.in.inA +& inB_sub
     io.out.res := resCarry(15, 0)
     flagCarry := ~resCarry(16)
-    flagOverflow := FLAGS.check_overflow(io.in.inA, io.in.inB, io.out.res)
+    flagOverflow := FLAGS.check_overflow(io.in.inA, inB_sub, io.out.res)
+    //printf("IN_A:0x%x IN_B:0x%x RES:0x%x\n", io.in.inA, io.in.inB, io.out.res)
   }.elsewhen(io.in.opcode === ALUOpcode.AND) {
     io.out.res := io.in.inA & io.in.inB
   }.elsewhen(io.in.opcode === ALUOpcode.OR) {
@@ -154,6 +157,7 @@ class ALU extends Module {
     io.out.res := DontCare
   }
   io.out.flag := Cat(FLAGS.check_sign(io.out.res), FLAGS.check_zero(io.out.res), flagCarry, flagOverflow)
+  //printf("FLAGS:%d\n", io.out.flag)
 }
 
 class Shifter extends Module {
@@ -163,7 +167,7 @@ class Shifter extends Module {
   }.elsewhen(io.in.opcode === ShifterOpcode.LSR) {
     io.out.res := (io.in.inA >> io.in.inB).asUInt()
   }.elsewhen(io.in.opcode === ShifterOpcode.ASR) {
-    io.out.res := (io.in.inA.asSInt() >> io.in.inB).asUInt()
+    io.out.res := ((io.in.inA.asSInt()) >> io.in.inB).asUInt()
   }.otherwise {
     io.out.res := DontCare
   }
@@ -182,7 +186,7 @@ object ALUOpcode {
 object ShifterOpcode {
   def LSL = BitPat("b001")
   def LSR = BitPat("b010")
-  def ASR = BitPat("b100")
+  def ASR = BitPat("b101")
 }
 
 object FLAGS {

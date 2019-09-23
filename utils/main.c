@@ -95,11 +95,10 @@ int main(int argc, char* argv[]){
                 continue;
             }
 
-            for(int j=0;j<Shdr[i].sh_size;j+=2){
+            for(int j=0;j<Shdr[i].sh_size;j++){
                 assert(data_ram_offset + j + 1 < DATA_RAM_SIZE && "Too large data (.data/.rodata).");
 
-                uint16_t hex = obj[j] + (obj[j+1]<<8);
-                printf("RAM: %04X %04X\n", data_ram_offset + j, hex);
+                printf("RAM: %04X %02X\n", data_ram_offset + j, obj[j]);
             }
             puts("");
         }

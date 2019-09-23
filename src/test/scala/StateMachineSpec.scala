@@ -20,7 +20,7 @@ class StateMachineSpec extends ChiselFlatSpec {
   assert(Driver(() => new StateMachine) {
     c =>
       new PeekPokeTester(c) {
-        for (i <- 0 until 100) {
+        for (i <- 1 until 100) {
           i % 5 match {
             case 0 =>
               expect(c.io.clockIF, true)
