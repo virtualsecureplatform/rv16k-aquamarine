@@ -52,6 +52,8 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   exUnit.io.in.inA := idwbUnit.io.rdData
   exUnit.io.in.inB := idwbUnit.io.rsData
   exUnit.io.memWriteDataIn := idwbUnit.io.memWriteData
+  exUnit.io.memSignExtIn := idwbUnit.io.memSignExt
+  exUnit.io.memByteEnableIn := idwbUnit.io.memByteEnable
 
   memUnit.io.Enable := st.io.clockMEM
   memUnit.io.address := exUnit.io.out.res

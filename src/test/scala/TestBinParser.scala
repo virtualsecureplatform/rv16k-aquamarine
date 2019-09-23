@@ -22,10 +22,10 @@ class TestBinParser(filePath: String) {
         romData += (addr->data)
       }
       else if(tokens(0).contains("RAM")){
-        if(addr%2 == 1){
-          memAData += (addr->data)
+        if((addr&0x1) == 1){
+          memAData += ((addr>>1)->data)
         }else{
-          memBData += (addr->data)
+          memBData += ((addr>>1)->data)
         }
       }
     }

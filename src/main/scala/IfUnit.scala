@@ -38,7 +38,7 @@ class IfUnit(implicit val conf: RV16KConfig) extends Module {
   val debug = RegInit(false.B)
   debug := io.Enable&&conf.debugIf.B
   when(debug){
-    printf("\n[IF]PC Address:0x%x\n", io.romAddress)
+    printf("[IF]PC Address:0x%x\n", io.romAddress)
   }
 }
 

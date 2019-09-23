@@ -36,13 +36,13 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val memByteEnable = Output(Bool())
   val memSignExt = Output(Bool())
 
-  val jumpAddress = Output(UInt(8.W))
+  val jumpAddress = Output(UInt(9.W))
   val jump = Output(Bool())
 
-  val debugRs = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
-  val debugRd = if (conf.debugId) Output(UInt(4.W)) else Output(UInt(0.W))
-  val debugRegWrite = if(conf.debugId) Output(Bool()) else Output(UInt(0.W))
-  val debugImmLongState = if(conf.debugId) Output(Bool()) else Output(UInt(0.W))
+  val debugRs = if (conf.test) Output(UInt(4.W)) else Output(UInt(0.W))
+  val debugRd = if (conf.test) Output(UInt(4.W)) else Output(UInt(0.W))
+  val debugRegWrite = if(conf.test) Output(Bool()) else Output(UInt(0.W))
+  val debugImmLongState = if(conf.test) Output(Bool()) else Output(UInt(0.W))
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
 }
@@ -83,10 +83,10 @@ class Decoder extends Module {
     }
     res
   }
-  def sign_ext_7bit(v:UInt) : UInt = {
+  def sign_ext_8bit(v:UInt) : UInt = {
     val res = Wire(UInt(16.W))
-    when(v(6,6) === 1.U){
-      res := Cat(0x1FF.U(9.W), v)
+    when(v(7,7) === 1.U){
+      res := Cat(0xFF.U(8.W), v)
     }.otherwise{
       res := v
     }
@@ -117,7 +117,7 @@ class Decoder extends Module {
     io.shifterSig := false.B
     io.memRead := false.B
     io.memWrite := false.B
-    io.imm := sign_ext_7bit(io.inst(6,0)) << 1
+    io.imm := sign_ext_8bit(io.inst(6,0) << 1)
     io.immSel := true.B
     when(io.inst(11, 10) === 0.U){
       io.jump := true.B
@@ -125,10 +125,10 @@ class Decoder extends Module {
     }.elsewhen(io.inst(11, 10) === 1.U){
       when(io.inst(9, 7) === 0.U){
         //JL
-        io.jump := (io.FLAGS(3) != io.FLAGS(0))
+        io.jump := (io.FLAGS(3) =/= io.FLAGS(0))
       }.elsewhen(io.inst(9, 7) === 1.U){
         //JLE
-        io.jump := (io.FLAGS(3) != io.FLAGS(0)) || (io.FLAGS(2) === 1.U)
+        io.jump := ((io.FLAGS(3) =/= io.FLAGS(0)) || (io.FLAGS(2) === 1.U))
       }.elsewhen(io.inst(9, 7) === 2.U){
         //JE
         io.jump := (io.FLAGS(2) === 1.U)
@@ -272,6 +272,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
     }
   }
 
+  when(io.exOpcode === ALUOpcode.SUB){
+    //printf("PC:0x%x IN_A:0x%x IN_B:0x%x\n",pReg.pc, mainRegister.io.rsData, mainRegister.io.rdData)
+  }
   mainRegister.io.writeEnable := decoder.io.writeEnable&&io.wbEnable
   mainRegister.io.writeData := io.writeData
 
@@ -295,6 +298,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
     printf("[ID] ImmLongInst:0x%x\n", immLongInst)
     printf("[ID] Decoder Inst:0x%x\n", decoder.io.inst)
     when(io.jump) {
+      printf("[ID] JumpInst:%d\n", decoder.io.imm)
       printf("[ID] JumpAddress:0x%x\n", io.jumpAddress)
     }
   }
@@ -303,4 +307,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.debugRegWrite := decoder.io.writeEnable
   io.debugImmLongState := immLongState
   io.testRegx8 := mainRegister.io.testRegx8
+  when(immLongState === 0.U){
+    mainRegister.io.testPC := pReg.pc
+  }.otherwise{
+    mainRegister.io.testPC := pReg.pc-2.U
+  }
 }
