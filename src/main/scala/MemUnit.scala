@@ -25,6 +25,13 @@ class MemPort extends Bundle {
   val out = Output(UInt(8.W))
 }
 
+class MemRegister extends Bundle {
+  val memRead = Bool()
+  val byteEnable = Bool()
+  val signExt = Bool()
+  val address = UInt(16.W)
+}
+
 class MemUnitPort extends Bundle {
   val in =  Input(UInt(16.W))
   val address = Input(UInt(16.W))
@@ -59,6 +66,7 @@ class MemUnitTest(implicit val conf:RV16KConfig) extends Module {
   val memA = Module(new ExternalRam)
   val memB = Module(new ExternalRam)
 
+
   unit.io.in := io.in
   unit.io.address := io.address
   unit.io.memRead := io.memRead
@@ -89,6 +97,14 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
     }
     res
   }
+  val pReg = RegInit(0.U.asTypeOf(new MemRegister))
+  when(io.Enable){
+    pReg.byteEnable := io.byteEnable
+    pReg.memRead := io.memRead
+    pReg.signExt := io.signExt
+    pReg.address := io.address
+  }
+
 
   val addr = Wire(UInt(8.W))
   val data_upper = io.in(15, 8)
@@ -120,16 +136,16 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
   }
 
   io.out := DontCare
-  when(io.memRead){
-    when(io.byteEnable){
-      when(io.address(0,0) === 1.U){
-        when(io.signExt){
+  when(pReg.memRead){
+    when(pReg.byteEnable){
+      when(pReg.address(0,0) === 1.U){
+        when(pReg.signExt){
           io.out := sign_ext_8bit(io.memA.out)
         }.otherwise{
           io.out := io.memA.out
         }
       }.otherwise{
-        when(io.signExt){
+        when(pReg.signExt){
           io.out := sign_ext_8bit(io.memB.out)
         }.otherwise{
           io.out := io.memB.out
@@ -139,14 +155,17 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
       io.out := Cat(io.memA.out, io.memB.out)
     }
   }.otherwise{
-    io.out := io.address
+    io.out := pReg.address
   }
 
   val debug = RegInit(false.B)
   debug := io.Enable&&conf.debugMem.B
   when(debug){
     when(io.memRead) {
-      printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", io.address, io.out)
+      printf("[MEM] MemRead Mem[0x%x] => Data:0x%x MemA:0x%x MemB:0x%x\n", io.address, io.out, io.memA.out, io.memB.out)
+    }
+    when(io.memWrite){
+      printf("[MEM] MemWrite Mem[0x%x] <= Data:0x%x\n", io.address, io.in)
     }
   }
 }

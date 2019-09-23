@@ -36,8 +36,9 @@ class ExternalTestRam(ram:Map[Int,Int]) {
 
   def memRead():Int = {
     val data = ramData.get(addr)
+
     if(data.isDefined){
-      data.get
+      data.get&0xFF
     }else{
       0
     }

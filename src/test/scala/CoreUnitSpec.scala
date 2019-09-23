@@ -31,6 +31,7 @@ class CoreUnitSpec() extends ChiselFlatSpec {
 
   testDir.listFiles().foreach { f =>
     if(f.getName().contains(".bin")) {
+      println(f.getName())
       val parser = new TestBinParser(f.getAbsolutePath())
       val rom = new ExternalRom(parser.romData)
 
@@ -50,10 +51,10 @@ class CoreUnitSpec() extends ChiselFlatSpec {
                 val memBData = peek(c.io.memB.in).toInt
                 val memBWrite = (peek(c.io.memB.writeEnable) != 0)
                 poke(c.io.romInst, rom.readInst(addr))
-                poke(c.io.memA.out, memA.memRead())
-                poke(c.io.memB.out, memB.memRead())
                 memA.step(memAWrite, memAAddr, memAData)
                 memB.step(memBWrite, memBAddr, memBData)
+                poke(c.io.memA.out, memA.memRead())
+                poke(c.io.memB.out, memB.memRead())
                 step(1)
               }
             }

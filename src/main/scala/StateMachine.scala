@@ -28,7 +28,7 @@ class StateMachinePort extends Bundle {
 class StateMachine extends Module {
   val io = IO(new StateMachinePort)
 
-  val state = RegInit(1.U(5.W))
+  val state = RegInit(2.U(5.W))
   state := Cat(state, state(4))
 
   io.clockIF := state(0)
