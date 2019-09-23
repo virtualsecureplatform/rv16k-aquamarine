@@ -21,6 +21,8 @@ class TopUnitPort(implicit val conf:RV16KConfig) extends Bundle {
   //val romAddr = Output(UInt(9.W))
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
+  val testPC = if (conf.test) Output(UInt(9.W)) else Output(UInt(0.W))
+  val testInst = if (debugIf) Output(UInt(16.W)) else Output(UInt(0.W))
   val romPort = Vec(256,Input(UInt(16.W)))
 }
 
@@ -47,4 +49,6 @@ class TopUnit(implicit val conf:RV16KConfig) extends Module{
   core.io.memB.out := memB.io.out
 
   io.testRegx8 := core.io.testRegx8
+  io.testPC := core.io.testPC
+  io.romPort := core.io.testInst
 }
