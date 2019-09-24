@@ -39,9 +39,9 @@ class MainRegister(implicit val conf:RV16KConfig) extends Module{
   io.rdData := MainReg(io.rd)
 
   when(io.writeEnable) {
-    MainReg(io.rd) := io.writeData
+    MainReg(io.writeReg) := io.writeData
     when(conf.debugWb.B) {
-      printf("%x Reg x%d <= 0x%x\n", io.testPC, io.rd, io.writeData)
+      printf("%x Reg x%d <= 0x%x\n", io.testPC, io.writeReg, io.writeData)
     }
   }.otherwise {}
 

@@ -24,13 +24,13 @@ class CoreUnitSpec() extends ChiselFlatSpec {
   conf.debugId = false
   conf.debugEx = false
   conf.debugMem = false
-  conf.debugWb = false
+  conf.debugWb = true
   conf.test = true
 
   val testDir = new File("src/test/binary/")
 
   testDir.listFiles().foreach { f =>
-    if(f.getName().contains(".bin")) {
+    if(f.getName().contains("0007-perceptron.bin")) {
       println(f.getName())
       val parser = new TestBinParser(f.getAbsolutePath())
       val rom = new ExternalRom(parser.romData)
@@ -42,7 +42,6 @@ class CoreUnitSpec() extends ChiselFlatSpec {
         c =>
           new PeekPokeTester(c) {
             for (i <- 0 until parser.cycle) {
-              if(!rom.finFlag) {
                 val addr = peek(c.io.romAddr).toInt
                 val memAAddr = peek(c.io.memA.address).toInt
                 val memAData = peek(c.io.memA.in).toInt
@@ -57,7 +56,6 @@ class CoreUnitSpec() extends ChiselFlatSpec {
                 poke(c.io.memA.out, memA.memRead())
                 poke(c.io.memB.out, memB.memRead())
               }
-            }
             expect(c.io.testRegx8, parser.res)
           }
       })
