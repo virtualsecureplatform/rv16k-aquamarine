@@ -129,7 +129,7 @@ class Decoder extends Module {
     io.memWrite := false.B
   }.elsewhen(io.inst(15, 14) === 1.U){
     //J-Instruction
-    printf("[ID] FLAGS:0x%x\n", io.FLAGS)
+    //printf("[ID] FLAGS:0x%x\n", io.FLAGS)
     io.exOpcode := 0.U(3.W)
     io.shifterSig := false.B
     io.memRead := false.B
@@ -228,10 +228,10 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val rsDataSrc = Wire(UInt(2.W))
   when(rsDataSrc === 0.U){
     when(decoder.io.rs === io.exRegWrite && io.exRegWriteEnable){
-      printf("[ID] Forward RS from EX Stage\n")
+      //printf("[ID] Forward RS from EX Stage\n")
       io.rsData := io.exFwdData
     }.elsewhen(decoder.io.rs === io.memRegWrite && io.memRegWriteEnable){
-      printf("[ID] Forward RS from MEM Stage\n")
+      //printf("[ID] Forward RS from MEM Stage\n")
       io.rsData := io.memFwdData
     }.otherwise{
       io.rsData := mainRegister.io.rsData
@@ -247,10 +247,10 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val rdDataSrc = Wire(UInt(2.W))
   when(rdDataSrc === 0.U){
     when(decoder.io.rd === io.exRegWrite && io.exRegWriteEnable ){
-      printf("[ID] Forward RD from EX Stage\n")
+      //printf("[ID] Forward RD from EX Stage\n")
       io.rdData := io.exFwdData
     }.elsewhen(decoder.io.rd === io.memRegWrite && io.memRegWriteEnable){
-      printf("[ID] Forward RD from MEM Stage\n")
+      //printf("[ID] Forward RD from MEM Stage\n")
       io.rdData := io.memFwdData
     }.otherwise{
       io.rdData := mainRegister.io.rdData
@@ -272,7 +272,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   when(rdDataSrc === 0.U || rsDataSrc === 0.U) {
     when((decoder.io.rd === io.exRegWrite || decoder.io.rs === io.exRegWrite)&& io.exRegWriteEnable === true.B) {
       when(io.exMemRead === true.B) {
-        printf("[ID] LD Stole\n")
+        //printf("[ID] LD Stole\n")
         io.ifStole := true.B
         idStole := true.B
       }
@@ -283,7 +283,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
     pReg.pc := io.pc
     pReg.FLAGS := io.FLAGS
     pReg.longInstState := 0.U
-    printf("[ID] ID Flush\n")
+    //printf("[ID] ID Flustrue
   }.elsewhen(io.Enable&&(!idStole)) {
     pReg.inst := io.inst
     pReg.pc := io.pc
