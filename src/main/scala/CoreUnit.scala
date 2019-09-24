@@ -18,7 +18,7 @@ import chisel3._
 
 class CoreUnitPort(implicit val conf:RV16KConfig) extends Bundle {
   val romInst = Input(UInt(16.W))
-  val romAddr = Output(UInt(9.W))
+  val romAddr = Output(UInt(conf.romAddrWidth.W))
   val memA = Flipped(new MemPort)
   val memB = Flipped(new MemPort)
 
@@ -35,7 +35,7 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   val exUnit = Module(new ExUnit)
   val memUnit = Module(new MemUnit)
 
-  ifUnit.io.Enable := st.io.clockIF
+  ifUnit.io.Enable := st.io.clockIF&&(!idwbUnit.io.ifStole)
   ifUnit.io.jump := idwbUnit.io.jump
   ifUnit.io.jumpAddress := idwbUnit.io.jumpAddress
   io.romAddr := ifUnit.io.romAddress
@@ -52,16 +52,22 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   exUnit.io.in.inA := idwbUnit.io.rdData
   exUnit.io.in.inB := idwbUnit.io.rsData
   exUnit.io.memWriteDataIn := idwbUnit.io.memWriteData
+  exUnit.io.memReadIn := idwbUnit.io.memRead
+  exUnit.io.memWriteIn := idwbUnit.io.memWrite
+  exUnit.io.regWriteEnableIn := idwbUnit.io.regWriteEnableOut
+  exUnit.io.regWriteIn := idwbUnit.io.regWriteOut
   exUnit.io.memSignExtIn := idwbUnit.io.memSignExt
   exUnit.io.memByteEnableIn := idwbUnit.io.memByteEnable
 
   memUnit.io.Enable := st.io.clockMEM
   memUnit.io.address := exUnit.io.out.res
   memUnit.io.in := exUnit.io.memWriteDataOut
-  memUnit.io.memRead := idwbUnit.io.memRead
-  memUnit.io.memWrite := idwbUnit.io.memWrite
+  memUnit.io.memRead := exUnit.io.memReadOut
+  memUnit.io.memWrite := exUnit.io.memWriteOut
   memUnit.io.byteEnable := exUnit.io.memByteEnableOut
   memUnit.io.signExt := exUnit.io.memSignExtOut
+  memUnit.io.regWriteEnableIn := exUnit.io.regWriteEnableOut
+  memUnit.io.regWriteIn := exUnit.io.regWriteOut
   io.memA.address := memUnit.io.memA.address
   io.memA.in := memUnit.io.memA.in
   io.memA.writeEnable := memUnit.io.memA.writeEnable
@@ -72,6 +78,16 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   memUnit.io.memB.out := io.memB.out
 
   idwbUnit.io.writeData := memUnit.io.out
+  idwbUnit.io.regWriteEnableIn := memUnit.io.regWriteEnableOut
+  idwbUnit.io.regWriteIn := memUnit.io.regWriteOut
+  idwbUnit.io.exRegWrite := exUnit.io.regWriteOut
+  idwbUnit.io.exRegWriteEnable := exUnit.io.regWriteEnableOut
+  idwbUnit.io.exFwdData := exUnit.io.fwdData
+  idwbUnit.io.exMemRead := exUnit.io.memReadOut
+  idwbUnit.io.exMemWrite := exUnit.io.memWriteOut
+  idwbUnit.io.memRegWrite := memUnit.io.regWriteOut
+  idwbUnit.io.memRegWriteEnable := memUnit.io.regWriteEnableOut
+  idwbUnit.io.memFwdData := memUnit.io.fwdData
 
   io.testRegx8 := idwbUnit.io.testRegx8
 }

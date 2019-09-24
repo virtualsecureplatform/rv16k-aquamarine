@@ -6,4 +6,5 @@ case class RV16KConfig() {
   var debugWb = true
 
   var test = false
+  val romAddrWidth = 9
 }

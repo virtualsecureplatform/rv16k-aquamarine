@@ -42,21 +42,19 @@ class CoreUnitSpec() extends ChiselFlatSpec {
         c =>
           new PeekPokeTester(c) {
             for (i <- 0 until parser.cycle) {
-              if(!rom.finFlag) {
-                val addr = peek(c.io.romAddr).toInt
-                val memAAddr = peek(c.io.memA.address).toInt
-                val memAData = peek(c.io.memA.in).toInt
-                val memAWrite = (peek(c.io.memA.writeEnable) != 0)
-                val memBAddr = peek(c.io.memB.address).toInt
-                val memBData = peek(c.io.memB.in).toInt
-                val memBWrite = (peek(c.io.memB.writeEnable) != 0)
-                poke(c.io.romInst, rom.readInst(addr))
-                step(1)
-                memA.step(memAWrite, memAAddr, memAData)
-                memB.step(memBWrite, memBAddr, memBData)
-                poke(c.io.memA.out, memA.memRead())
-                poke(c.io.memB.out, memB.memRead())
-              }
+              val addr = peek(c.io.romAddr).toInt
+              val memAAddr = peek(c.io.memA.address).toInt
+              val memAData = peek(c.io.memA.in).toInt
+              val memAWrite = (peek(c.io.memA.writeEnable) != 0)
+              val memBAddr = peek(c.io.memB.address).toInt
+              val memBData = peek(c.io.memB.in).toInt
+              val memBWrite = (peek(c.io.memB.writeEnable) != 0)
+              poke(c.io.romInst, rom.readInst(addr))
+              step(1)
+              memA.step(memAWrite, memAAddr, memAData)
+              memB.step(memBWrite, memBAddr, memBData)
+              poke(c.io.memA.out, memA.memRead())
+              poke(c.io.memB.out, memB.memRead())
             }
             expect(c.io.testRegx8, parser.res)
           }
