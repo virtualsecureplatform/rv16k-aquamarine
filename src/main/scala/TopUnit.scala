@@ -21,9 +21,15 @@ class TopUnitPort(implicit val conf:RV16KConfig) extends Bundle {
   //val romAddr = Output(UInt(9.W))
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
-  val testPC = if (conf.test) Output(UInt(9.W)) else Output(UInt(0.W))
-  val testInst = if (debugIf) Output(UInt(16.W)) else Output(UInt(0.W))
+  val testPC = if (conf.debugIf) Output(UInt(9.W)) else Output(UInt(0.W))
+  val testInst = if (conf.debugIf) Output(UInt(16.W)) else Output(UInt(0.W))
   val romPort = Vec(256,Input(UInt(16.W)))
+  val testjump = if (conf.debugIf) Output(Bool()) else Output(UInt(0.W))
+  val testState = if (conf.debugState) Output(UInt(5.W)) else Output(UInt(0.W))
+  val testjumpAddress = if (conf.debugIf) Output(UInt(9.W)) else Output(UInt(0.W))
+  val debugImmLongState = if(conf.test) Output(UInt(2.W)) else Output(UInt(0.W))
+  val debugimmLongInst = if (conf.debugId) Output(UInt(16.W)) else Output(UInt(0.W))
+  val debugpRegInst = if (conf.debugId) Output(UInt(16.W)) else Output(UInt(0.W))
 }
 
 class TopUnit(implicit val conf:RV16KConfig) extends Module{
@@ -50,5 +56,11 @@ class TopUnit(implicit val conf:RV16KConfig) extends Module{
 
   io.testRegx8 := core.io.testRegx8
   io.testPC := core.io.testPC
-  io.romPort := core.io.testInst
+  io.testInst := rom.io.out
+  io.testjump := core.io.testjump
+  io.testState := core.io.testState
+  io.testjumpAddress := core.io.testjumpAddress
+  io.debugImmLongState := core.io.debugImmLongState
+  io.debugimmLongInst := core.io.debugimmLongInst
+  io.debugpRegInst := core.io.debugpRegInst
 }

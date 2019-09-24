@@ -31,5 +31,5 @@ class LURom extends Module {
   for(i <- 0 to 255){
       data = data :+ (i.U -> io.rom(i))
   }
-  io.out := MuxLookup(io.address,0.U,data)
+  io.out := MuxLookup(io.address >> 1,0.U,data)
 }

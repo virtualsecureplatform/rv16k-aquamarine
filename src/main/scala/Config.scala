@@ -4,6 +4,7 @@ case class RV16KConfig() {
   var debugEx = true
   var debugMem = true
   var debugWb = true
+  var debugState = true
 
   var test = true
 }

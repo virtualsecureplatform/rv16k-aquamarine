@@ -23,8 +23,13 @@ class CoreUnitPort(implicit val conf:RV16KConfig) extends Bundle {
   val memB = Flipped(new MemPort)
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
-  val testPC = if (debugIf) Output(UInt(9.W)) else Output(UInt(0.W))
-  val testInst = if (debugIf) Output(UInt(16.W)) else Output(UInt(0.W))
+  val testPC = if (conf.debugIf) Output(UInt(9.W)) else Output(UInt(0.W))
+  val testjump = if (conf.debugIf) Output(Bool()) else Output(UInt(0.W))
+  val testjumpAddress = if (conf.test) Output(UInt(9.W)) else Output(UInt(0.W))
+  val testState = if (conf.debugState) Output(UInt(5.W)) else Output(UInt(0.W))
+  val debugImmLongState = if(conf.test) Output(UInt(2.W)) else Output(UInt(0.W))
+  val debugimmLongInst = if (conf.debugId) Output(UInt(16.W)) else Output(UInt(0.W))
+  val debugpRegInst = if (conf.debugId) Output(UInt(16.W)) else Output(UInt(0.W))
 }
 
 class CoreUnit(implicit val conf: RV16KConfig) extends Module {
@@ -77,5 +82,10 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
 
   io.testRegx8 := idwbUnit.io.testRegx8
   io.testPC := ifUnit.io.romAddress
-  io.testInst := io.romInst
+  io.testjump := idwbUnit.io.jump
+  io.testjumpAddress := idwbUnit.io.jumpAddress
+  io.testState := st.io.clockIF.asUInt + (st.io.clockID.asUInt << 1) + (st.io.clockEX.asUInt << 2) + (st.io.clockMEM.asUInt << 3) + (st.io.clockWB.asUInt << 4)
+  io.debugImmLongState := idwbUnit.io.debugImmLongState
+  io.debugimmLongInst := idwbUnit.io.debugimmLongInst
+  io.debugpRegInst := idwbUnit.io.debugpRegInst
 }
