@@ -159,6 +159,7 @@ class IdWbUnitSpec extends ChiselFlatSpec {
         //LSR
         //ASR
         //CMP
+        /*
         //J
         poke(c.io.inst, 0x5200.U)
         step(1)
@@ -298,6 +299,7 @@ class IdWbUnitSpec extends ChiselFlatSpec {
         expect(c.io.memWrite, false.B)
         expect(c.io.jump, true.B)
         expect(c.io.jumpAddress, 0x1A.U)
+        */
       }
   })
 }
