@@ -61,6 +61,7 @@ class IdUnitPort (implicit val conf:RV16KConfig) extends Bundle {
   val debugImmLongState = if(conf.test) Output(Bool()) else Output(UInt(0.W))
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
+  val testFinish = if (conf.test) Output(Bool()) else Output(UInt(0.W))
 }
 
 class LongImm extends Bundle {
@@ -217,6 +218,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   val idFlush = Wire(Bool())
   val idStole = Wire(Bool())
 
+  val finishFlag = RegInit(Bool(), false.B)
+  finishFlag := finishFlag
+
   io.ifStole := false.B
   idStole := false.B
   idFlush := false.B
@@ -349,6 +353,9 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
       //J,JAL
       rsDataSrc := 3.U
       io.jumpAddress := pReg.pc + pReg.inst
+      when(pReg.inst === 0xFFFE.U(16.W)){
+        finishFlag := true.B
+      }
     }
   }.elsewhen((pReg.longInstState === 2.U) && (pReg.longInst(15, 14) === 2.U)) {
     decoder.io.inst := pReg.longInst
@@ -396,6 +403,7 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.debugRegWrite := decoder.io.writeEnable
   io.debugImmLongState := pReg.longInstState
   io.testRegx8 := mainRegister.io.testRegx8
+  io.testFinish := finishFlag
   when(pReg.longInstState === 0.U){
     mainRegister.io.testPC := pReg.pc
   }.otherwise{

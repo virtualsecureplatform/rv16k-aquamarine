@@ -23,6 +23,7 @@ class CoreUnitPort(implicit val conf:RV16KConfig) extends Bundle {
   val memB = Flipped(new MemPort)
 
   val testRegx8 = if (conf.test) Output(UInt(16.W)) else Output(UInt(0.W))
+  val testFinish = if (conf.test) Output(Bool()) else Output(UInt(0.W))
 }
 
 class CoreUnit(implicit val conf: RV16KConfig) extends Module {
@@ -90,4 +91,5 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   idwbUnit.io.memFwdData := memUnit.io.fwdData
 
   io.testRegx8 := idwbUnit.io.testRegx8
+  io.testFinish := idwbUnit.io.testFinish
 }

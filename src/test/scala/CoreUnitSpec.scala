@@ -38,10 +38,16 @@ class CoreUnitSpec() extends ChiselFlatSpec {
       val memA = new ExternalTestRam(parser.memAData)
       val memB = new ExternalTestRam(parser.memBData)
 
+      var cycle = parser.cycle
+      var cycleFinishFlag = false
       assert(Driver(() => new CoreUnit) {
         c =>
           new PeekPokeTester(c) {
-            for (i <- 0 until parser.cycle) {
+            for (i <- 0 until cycle) {
+              if((peek(c.io.testFinish) == 1)&&(!cycleFinishFlag)){
+                cycle = i+5
+                cycleFinishFlag = true
+              }
               val addr = peek(c.io.romAddr).toInt
               val memAAddr = peek(c.io.memA.address).toInt
               val memAData = peek(c.io.memA.in).toInt
