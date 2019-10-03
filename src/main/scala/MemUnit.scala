@@ -25,13 +25,6 @@ class MemPort extends Bundle {
   val out = Output(UInt(8.W))
 }
 
-class MemRegister extends Bundle {
-  val memRead = Bool()
-  val byteEnable = Bool()
-  val signExt = Bool()
-  val address = UInt(16.W)
-}
-
 class MemUnitPort extends Bundle {
   val in =  Input(UInt(16.W))
   val address = Input(UInt(16.W))
@@ -41,11 +34,28 @@ class MemUnitPort extends Bundle {
   val byteEnable = Input(Bool())
   val signExt = Input(Bool())
   val Enable = Input(Bool())
+  val regWriteEnableIn = Input(Bool())
+  val regWriteIn = Input(UInt(4.W))
 
   val memA = Flipped(new MemPort)
   val memB = Flipped(new MemPort)
 
   val out = Output(UInt(16.W))
+  val regWriteEnableOut = Output(Bool())
+  val regWriteOut = Output(UInt(4.W))
+
+  val fwdData = Output(UInt(16.W))
+}
+
+class MemReg extends Bundle {
+  val address = UInt(16.W)
+  val memRead = Bool()
+  val byteEnable = Bool()
+  val signExt = Bool()
+
+  val regWriteEnable = Bool()
+  val regWrite = UInt(4.W)
+  val outData = UInt(16.W)
 }
 
 class MemUnitTestPort extends Bundle{
@@ -88,6 +98,22 @@ class MemUnitTest(implicit val conf:RV16KConfig) extends Module {
 class MemUnit(implicit val conf:RV16KConfig) extends Module {
   val io = IO(new MemUnitPort)
 
+  val pReg = RegInit(0.U.asTypeOf(new MemReg))
+
+  when(io.Enable){
+    pReg.address := io.address
+    pReg.memRead := io.memRead
+    pReg.signExt := io.signExt
+    pReg.byteEnable := io.byteEnable
+
+    pReg.regWriteEnable := io.regWriteEnableIn
+    pReg.regWrite := io.regWriteIn
+    pReg.outData := io.address
+  }
+  io.regWriteEnableOut := pReg.regWriteEnable
+  io.regWriteOut := pReg.regWrite
+  io.fwdData := io.out
+
   def sign_ext_8bit(v:UInt) : UInt = {
     val res = Wire(UInt(16.W))
     when(v(7,7) === 1.U){
@@ -97,14 +123,6 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
     }
     res
   }
-  val pReg = RegInit(0.U.asTypeOf(new MemRegister))
-  when(io.Enable){
-    pReg.byteEnable := io.byteEnable
-    pReg.memRead := io.memRead
-    pReg.signExt := io.signExt
-    pReg.address := io.address
-  }
-
 
   val addr = Wire(UInt(8.W))
   val data_upper = io.in(15, 8)
@@ -155,16 +173,14 @@ class MemUnit(implicit val conf:RV16KConfig) extends Module {
       io.out := Cat(io.memA.out, io.memB.out)
     }
   }.otherwise{
-    io.out := pReg.address
+    io.out := pReg.outData
   }
 
-  val debug = RegInit(false.B)
-  debug := io.Enable&&conf.debugMem.B
-  when(debug){
-    when(io.memRead) {
-      printf("[MEM] MemRead Mem[0x%x] => Data:0x%x MemA:0x%x MemB:0x%x\n", io.address, io.out, io.memA.out, io.memB.out)
+  when(conf.debugMem.B){
+    when(pReg.memRead) {
+      printf("[MEM] MemRead Mem[0x%x] => Data:0x%x\n", pReg.address, io.out)
     }
-    when(io.memWrite){
+    when(io.memWrite) {
       printf("[MEM] MemWrite Mem[0x%x] <= Data:0x%x\n", io.address, io.in)
     }
   }

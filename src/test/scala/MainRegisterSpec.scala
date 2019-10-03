@@ -38,7 +38,7 @@ class MainRegisterSpec extends ChiselFlatSpec{
             val test_i = v.asUInt(16.W)
             testDataArray = testDataArray :+ test_i
             poke(c.io.writeEnable, true.B)
-            poke(c.io.rd, i.U(4.W))
+            poke(c.io.writeReg, i.U(4.W))
             poke(c.io.writeData, test_i)
             step(1)
           }
@@ -46,7 +46,7 @@ class MainRegisterSpec extends ChiselFlatSpec{
             val v = Random.nextInt()&0xFFFF
             val test_i = v.asUInt(16.W)
             poke(c.io.writeEnable, false.B)
-            poke(c.io.rd, i.U(4.W))
+            poke(c.io.writeReg, i.U(4.W))
             poke(c.io.writeData, test_i)
             step(1)
           }
