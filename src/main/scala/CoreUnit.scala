@@ -98,7 +98,6 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   idwbUnit.io.memFwdData := memUnit.io.fwdData
 
   io.testRegx8 := idwbUnit.io.testRegx8
-<<<<<<< HEAD
   io.testPC := ifUnit.io.romAddress
   io.testjump := idwbUnit.io.jump
   io.testjumpAddress := idwbUnit.io.jumpAddress
@@ -106,7 +105,5 @@ class CoreUnit(implicit val conf: RV16KConfig) extends Module {
   io.debugImmLongState := idwbUnit.io.debugImmLongState
   io.debugimmLongInst := idwbUnit.io.debugimmLongInst
   io.debugpRegInst := idwbUnit.io.debugpRegInst
-=======
   io.testFinish := idwbUnit.io.testFinish
->>>>>>> master
 }

@@ -403,8 +403,8 @@ class IdWbUnit(implicit val conf: RV16KConfig) extends Module {
   io.debugRs := decoder.io.rs
   io.debugRd := decoder.io.rd
   io.debugRegWrite := decoder.io.writeEnable
-  io.debugImmLongState := immLongState
-  io.debugimmLongInst := immLongInst
+  io.debugImmLongState := pReg.longInstState
+  io.debugimmLongInst := pReg.longInst
   io.debugpRegInst := pReg.inst
   io.testRegx8 := mainRegister.io.testRegx8
   io.testFinish := finishFlag
